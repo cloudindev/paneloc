@@ -24,8 +24,9 @@ export default function LoginPage() {
     if (result && result.error) {
       setErrorMsg(result.error)
       setIsLoading(false)
+    } else if (result && result.success) {
+      window.location.href = "/"
     }
-    // Si es success, el Server Action tira el redirect nativo
   }
 
   return (
