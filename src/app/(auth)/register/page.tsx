@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const [isLoading, setIsLoading] = React.useState(false)
 
   const onSubmit = (e: React.FormEvent) => {
@@ -15,7 +15,7 @@ export default function LoginPage() {
     setIsLoading(true)
     setTimeout(() => {
       window.location.href = "/" // Mock redirect to dashboard
-    }, 1000)
+    }, 1500)
   }
 
   return (
@@ -28,19 +28,31 @@ export default function LoginPage() {
           OLA <span className="font-light text-primary">CLOUD</span>
         </h1>
         <p className="text-sm text-muted-foreground">
-          Premium infrastructure for your applications
+          Crea tu cuenta y empieza a desplegar en segundos.
         </p>
       </div>
 
       <Card className="glass-panel border-border/40">
         <form onSubmit={onSubmit}>
           <CardHeader className="space-y-1">
-            <CardTitle className="text-xl">Iniciar sesión</CardTitle>
+            <CardTitle className="text-xl">Regístrate</CardTitle>
             <CardDescription>
-              Introduce tu correo y contraseña para acceder al panel.
+              Introduce tus datos para crear una nueva cuenta.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="name" className="text-sm font-medium leading-none">
+                Nombre Completo
+              </label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="Juan Pérez"
+                required
+                className="bg-background/50"
+              />
+            </div>
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium leading-none">
                 Correo electrónico
@@ -54,53 +66,36 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label htmlFor="password" className="text-sm font-medium leading-none">
-                  Contraseña
-                </label>
-                <Link href="#" className="text-xs text-primary hover:underline">
-                  ¿Olvidaste tu contraseña?
-                </Link>
-              </div>
+              <label htmlFor="password" className="text-sm font-medium leading-none">
+                Contraseña
+              </label>
               <Input
                 id="password"
                 type="password"
+                placeholder="••••••••"
                 required
                 className="bg-background/50"
               />
             </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="remember"
-                className="h-4 w-4 rounded border-input bg-background/50 text-primary focus:ring-primary"
-              />
-              <label
-                htmlFor="remember"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Recordar sesión
-              </label>
-            </div>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex-col gap-4">
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <span className="flex items-center gap-2">
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                  Conectando...
+                  Creando cuenta...
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
-                  Acceder al Panel <ArrowRight className="h-4 w-4" />
+                  Crear Cuenta <ArrowRight className="h-4 w-4" />
                 </span>
               )}
             </Button>
             
-            <div className="mt-4 text-center text-sm w-full">
-              <span className="text-muted-foreground">¿Aún no tienes cuenta? </span>
-              <Link href="/register" className="font-medium text-primary hover:underline">
-                Crea una gratis
+            <div className="text-center text-sm">
+              <span className="text-muted-foreground">¿Ya tienes una cuenta? </span>
+              <Link href="/login" className="font-medium text-primary hover:underline">
+                Inicia sesión aquí
               </Link>
             </div>
           </CardFooter>
@@ -108,12 +103,15 @@ export default function LoginPage() {
       </Card>
       
       <p className="mt-8 text-center text-xs text-muted-foreground">
-        Al iniciar sesión, aceptas nuestros <Link href="#" className="underline hover:text-primary">Términos de servicio</Link> y <Link href="#" className="underline hover:text-primary">Política de privacidad</Link>.
+        Al registrarte, aceptas nuestros <Link href="#" className="underline hover:text-primary">Términos de servicio</Link> y <Link href="#" className="underline hover:text-primary">Política de privacidad</Link>.
       </p>
     </div>
   )
 }
 /**
- * OLA CLOUD - Login Page
+ * OLA CLOUD - Register Page
  * Impressive entry point with glassmorphism forms and subtle interactions.
+ * 
+ * Lessons Learned:
+ * - Always provide a way to switch between login and register views to enhance UI flow.
  */
