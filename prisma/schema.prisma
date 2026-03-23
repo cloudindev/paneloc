@@ -7,24 +7,101 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Ejemplo básico orientado a un PaaS: Usuarios y Proyectos Cloud
-model User {
-  id        String    @id @default(cuid())
-  name      String?
-  email     String    @unique
-  password  String    // Hash
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+// ----------------------------------------------------------------------------
+// MULTI-TENANT CORE
+// ----------------------------------------------------------------------------
 
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  plan      String   @default("free") // free, pro, enterprise
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members   OrganizationMember[]
   projects  Project[]
 }
 
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  password  String   // Hash
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships OrganizationMember[]
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+model OrganizationMember {
+  id             String       @id @default(cuid())
+  role           Role         @default(MEMBER)
+  
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([userId, organizationId]) // Un usuario solo puede tener una membresía por organización
+  @@index([organizationId])
+  @@index([userId])
+}
+
+// ----------------------------------------------------------------------------
+// DBaaS / PaaS RESOURCES
+// ----------------------------------------------------------------------------
+
 model Project {
-  id        String    @id @default(cuid())
-  name      String
-  status    String    @default("provisioning") // 'provisioning', 'active', 'failed'
-  userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id             String       @id @default(cuid())
+  name           String
+  description    String?
+  status         String       @default("active") // active, suspended
+  
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  resources      Resource[]
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+}
+
+enum ResourceType {
+  POSTGRES_DB
+  MYSQL_DB
+  REDIS
+  WEB_SERVICE
+  WORKER
+}
+
+model Resource {
+  id          String       @id @default(cuid())
+  name        String
+  type        ResourceType
+  status      String       @default("pending") // pending, starting, running, stopped, error
+  
+  // Configuraciones específicas del recurso en formato JSON (ej. RAM, vCPU, región, URI de red privada)
+  config      Json         @default("{}")
+  
+  projectId   String
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([projectId])
 }
