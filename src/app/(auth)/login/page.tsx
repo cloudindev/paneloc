@@ -21,12 +21,14 @@ export default function LoginPage() {
   return (
     <div className="w-full max-w-md">
       <div className="mb-8 flex flex-col items-center justify-center space-y-2">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/20 ring-1 ring-primary/30">
-          <CloudLightning className="h-6 w-6 text-primary" />
-        </div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          OLA <span className="font-light text-primary">CLOUD</span>
-        </h1>
+        <Link href="https://olacloud.es" className="flex flex-col items-center justify-center space-y-2 transition-opacity hover:opacity-80">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/20 ring-1 ring-primary/30">
+            <CloudLightning className="h-6 w-6 text-primary" />
+          </div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            OLA <span className="font-light text-primary">CLOUD</span>
+          </h1>
+        </Link>
         <p className="text-sm text-muted-foreground">
           Premium infrastructure for your applications
         </p>
