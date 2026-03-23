@@ -7,15 +7,25 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
+import { loginAction } from "@/app/actions/auth"
+
 export default function LoginPage() {
   const [isLoading, setIsLoading] = React.useState(false)
+  const [errorMsg, setErrorMsg] = React.useState<string | null>(null)
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
-    setTimeout(() => {
-      window.location.href = "/" // Mock redirect to dashboard
-    }, 1000)
+    setErrorMsg(null)
+    
+    const formData = new FormData(e.currentTarget)
+    const result = await loginAction(null, formData)
+    
+    if (result && result.error) {
+      setErrorMsg(result.error)
+      setIsLoading(false)
+    }
+    // Si es success, el Server Action tira el redirect nativo
   }
 
   return (
@@ -43,12 +53,18 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {errorMsg && (
+              <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive border border-destructive/20">
+                {errorMsg}
+              </div>
+            )}
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium leading-none">
                 Correo electrónico
               </label>
               <Input
                 id="email"
+                name="email"
                 type="email"
                 placeholder="nombre@ejemplo.com"
                 required
@@ -66,6 +82,7 @@ export default function LoginPage() {
               </div>
               <Input
                 id="password"
+                name="password"
                 type="password"
                 required
                 className="bg-background/50"

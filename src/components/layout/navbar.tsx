@@ -1,9 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { Search, Bell, User } from "lucide-react"
+import { Search, Bell, User, LogOut } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { logoutAction } from "@/app/actions/auth"
 
 export function Navbar() {
   return (
@@ -35,18 +36,20 @@ export function Navbar() {
           <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-border" aria-hidden="true" />
 
           {/* Profile dropdown */}
-          <div className="relative">
-            <Button variant="ghost" className="flex items-center gap-x-3 p-1">
-              <span className="sr-only">Abrir menú de usuario</span>
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary">
-                <User className="h-4 w-4" />
-              </div>
-              <span className="hidden lg:flex lg:items-center">
-                <span className="text-sm font-semibold leading-6 text-foreground" aria-hidden="true">
-                  Admin
+          <div className="relative group">
+            <form action={logoutAction}>
+              <Button type="submit" variant="ghost" className="flex items-center gap-x-3 p-1 hover:bg-destructive/10 hover:text-destructive group-hover:text-destructive transition-all">
+                <span className="sr-only">Cerrar sesión</span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary group-hover:bg-destructive/20 group-hover:text-destructive transition-all">
+                  <LogOut className="h-4 w-4" />
+                </div>
+                <span className="hidden lg:flex lg:items-center">
+                  <span className="text-sm font-semibold leading-6" aria-hidden="true">
+                    Cerrar sesión
+                  </span>
                 </span>
-              </span>
-            </Button>
+              </Button>
+            </form>
           </div>
         </div>
       </div>
