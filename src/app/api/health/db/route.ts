@@ -27,7 +27,7 @@ export async function GET() {
     return NextResponse.json({
       status: 'unhealthy',
       database: 'disconnected',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : 'Verificar logs internos del servidor (VM102/Coolify)'
+      error: String(error) // Mostrar el error explícitamente sin enmascararlo para debug
     }, { status: 503 })
   }
 }
