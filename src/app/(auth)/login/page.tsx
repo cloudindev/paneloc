@@ -110,7 +110,7 @@ export default function LoginPage() {
       </Card>
       
       <p className="mt-8 text-center text-xs text-muted-foreground">
-        Al iniciar sesión, aceptas nuestros <Link href="#" className="underline hover:text-primary">Términos de servicio</Link> y <Link href="#" className="underline hover:text-primary">Política de privacidad</Link>.
+        Al iniciar sesión, aceptas nuestra <Link href="https://olacloud.es/politica-de-privacidad" target="_blank" className="underline hover:text-primary">Política de privacidad</Link>.
       </p>
     </div>
   )
