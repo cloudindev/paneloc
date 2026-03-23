@@ -1,0 +1,30 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Ejemplo básico orientado a un PaaS: Usuarios y Proyectos Cloud
+model User {
+  id        String    @id @default(cuid())
+  name      String?
+  email     String    @unique
+  password  String    // Hash
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  projects  Project[]
+}
+
+model Project {
+  id        String    @id @default(cuid())
+  name      String
+  status    String    @default("provisioning") // 'provisioning', 'active', 'failed'
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
