@@ -48,9 +48,9 @@ export async function loginAction(prevState: any, formData: FormData) {
     // Devolver objeto success explícito
     return { success: true }
 
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error validando el login:", err)
-    return { error: "Error interno del servidor. Inténtalo más tarde." }
+    return { error: "Error Prisma Action: " + (err?.message || String(err)) }
   }
 }
 
