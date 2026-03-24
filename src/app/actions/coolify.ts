@@ -190,3 +190,17 @@ export async function deployToCoolify(params: {
     return { success: false, error: error.message || "Unknown error" }
   }
 }
+
+export async function getLiveProjectStatus(uuid: string) {
+  try {
+    const res = await coolifyFetch("GET", `/applications/${uuid}`)
+    return {
+      success: true,
+      status: res.status, // ej. "running", "exited", etc
+      fqdn: res.fqdn,
+      updated_at: res.updated_at
+    }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+}
