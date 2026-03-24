@@ -5,7 +5,10 @@ import { verifyJWT } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 
 async function coolifyFetch(method: string, endpoint: string, body?: any) {
-  const apiUrl = process.env.COOLIFY_API_URL?.trim() || "http://127.0.0.1:8000/api/v1"
+  let apiUrl = process.env.COOLIFY_API_URL?.trim() || "http://127.0.0.1:8000/api/v1"
+  if (apiUrl.endsWith("/")) apiUrl = apiUrl.slice(0, -1)
+  if (!apiUrl.endsWith("/api/v1")) apiUrl += "/api/v1"
+  
   let apiToken = process.env.COOLIFY_API_TOKEN?.trim()
   
   // Limpiar si el usuario metió la palabra Bearer dentro de la variable
