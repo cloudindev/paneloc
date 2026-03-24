@@ -50,7 +50,7 @@ export async function loginAction(prevState: any, formData: FormData) {
 
   } catch (err: any) {
     console.error("Error validando el login:", err)
-    return { error: "Error Prisma Action: " + (err?.message || String(err)) }
+    return { error: "Error interno del servidor. Inténtalo más tarde." }
   }
 }
 
