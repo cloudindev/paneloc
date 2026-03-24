@@ -80,7 +80,7 @@ export async function getResourceById(id: string) {
           include: {
             organization: {
               include: {
-                memberships: {
+                members: {
                   where: { userId: session.sub }
                 }
               }
@@ -90,7 +90,7 @@ export async function getResourceById(id: string) {
       }
     })
 
-    if (!resource || resource.project.organization.memberships.length === 0) {
+    if (!resource || resource.project.organization.members.length === 0) {
       throw new Error("Recurso no encontrado o sin permisos")
     }
 
