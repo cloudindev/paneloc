@@ -90,32 +90,35 @@ export function ProjectsGrid({ initialProjects }: { initialProjects: any[] }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filtered.map((project) => {
-          const status = (project.liveStatus || project.status).toLowerCase()
+          const rawStatus = (project.liveStatus || project.status).toLowerCase()
+          const status = rawStatus.split(":")[0] // clean "running:unknown" or "exited:expected"
           
           // Estilizado dinámico de anillos de estado Cloud
           let ringColor = "bg-muted"
           let textColor = "text-muted-foreground"
           
-          if (status.includes("running")) { 
+          if (rawStatus.includes("running")) { 
             ringColor = "bg-emerald-500"
             textColor = "text-emerald-500" 
           }
-          else if (status.includes("building") || status.includes("deploying") || status.includes("starting")) { 
+          else if (rawStatus.includes("building") || rawStatus.includes("deploying") || rawStatus.includes("starting")) { 
             ringColor = "bg-yellow-500 animate-pulse"
             textColor = "text-yellow-500" 
           }
-          else if (status.includes("exited") || status.includes("stopped")) { 
+          else if (rawStatus.includes("exited") || rawStatus.includes("stopped")) { 
             ringColor = "bg-zinc-500"
             textColor = "text-zinc-500" 
           }
-          else if (status.includes("error") || status.includes("failed")) { 
+          else if (rawStatus.includes("error") || rawStatus.includes("failed")) { 
             ringColor = "bg-red-500"
             textColor = "text-red-500" 
           }
 
           return (
-            <Card key={project.id} className="group relative overflow-hidden bg-card/40 backdrop-blur-sm border border-border/50 hover:border-border transition-all">
-              <CardHeader className="pb-4">
+            <Card key={project.id} className="group relative overflow-hidden bg-card/40 backdrop-blur-sm border border-border/50 hover:border-border transition-all hover:shadow-sm">
+              <Link href={`/projects/${project.id}`} className="absolute inset-0 z-0" aria-label={`Ver detalle de ${project.name}`} />
+              
+              <CardHeader className="pb-4 relative z-10 pointer-events-none">
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
@@ -128,28 +131,26 @@ export function ProjectsGrid({ initialProjects }: { initialProjects: any[] }) {
                       )}
                     </div>
                     <div>
-                      <Link href={`/projects/${project.id}`} className="hover:underline before:absolute before:inset-0 before:z-0">
-                        <h3 className="font-semibold text-lg">{project.name}</h3>
-                      </Link>
+                      <h3 className="font-semibold text-lg">{project.name}</h3>
                       <p className="text-xs text-muted-foreground font-mono">{project.config?.repo || "Desconocido"}</p>
                     </div>
                   </div>
-                  <div className="z-10 relative">
+                  <div className="pointer-events-auto">
                     <ActionMenu project={project} />
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="pb-4 relative z-10">
+              <CardContent className="pb-4 relative z-10 pointer-events-none">
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
                     <span className="relative flex h-2.5 w-2.5">
-                      {status.includes("running") && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>}
+                      {rawStatus.includes("running") && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>}
                       <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${ringColor}`}></span>
                     </span>
                     <span className={`capitalize font-medium ${textColor}`}>{status || "pending"}</span>
                   </div>
                   {project.domain ? (
-                    <a href={project.domain.startsWith('http') ? project.domain : `http://${project.domain}`} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-primary transition-colors hover:underline truncate max-w-[150px] relative z-20">
+                    <a href={project.domain.startsWith('http') ? project.domain : `http://${project.domain}`} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-primary transition-colors hover:underline truncate max-w-[150px] relative z-20 pointer-events-auto">
                       {project.domain.replace(/^https?:\/\//, '')}
                     </a>
                   ) : (
@@ -157,7 +158,7 @@ export function ProjectsGrid({ initialProjects }: { initialProjects: any[] }) {
                   )}
                 </div>
               </CardContent>
-              <CardFooter className="pt-4 border-t border-border/50 text-xs text-muted-foreground justify-between">
+              <CardFooter className="pt-4 border-t border-border/50 text-xs text-muted-foreground justify-between relative z-10 pointer-events-none">
                 <span className="flex items-center gap-1.5"><GitBranch className="h-3 w-3" /> {project.config?.branch || "main"}</span>
                 <span>{project.lastDeploy ? new Date(project.lastDeploy).toLocaleString() : "Sin despliegues"}</span>
               </CardFooter>
