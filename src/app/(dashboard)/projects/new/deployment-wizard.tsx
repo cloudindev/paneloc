@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { disconnectGithub } from "@/app/actions/github"
+import { deployToCoolify } from "@/app/actions/coolify"
 
 export function DeploymentWizard({ repositories }: { repositories: any[] }) {
   const [framework, setFramework] = React.useState("nextjs")
@@ -19,11 +20,26 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
     repo.name.toLowerCase().includes(search.toLowerCase())
   )
 
-  const deploy = () => {
+  const deploy = async () => {
+    if (!selectedRepo) return
     setIsDeploying(true)
-    setTimeout(() => {
-      window.location.href = "/projects"
-    }, 2000)
+    
+    const res = await deployToCoolify({
+      repoFullName: selectedRepo.fullName,
+      branch: selectedRepo.defaultBranch || "main",
+      projectName: selectedRepo.name.toLowerCase(),
+      framework: framework,
+      isPrivate: selectedRepo.private
+    })
+
+    if (res.success) {
+      // Redirigir a una pantalla de la app o logs (Fase 5)
+      // Por ahora mandamos a Proyectos genérico
+      window.location.href = `/projects`
+    } else {
+      setIsDeploying(false)
+      alert("Error desplegando en Coolify: " + res.error)
+    }
   }
 
   const handleDisconnect = async () => {
