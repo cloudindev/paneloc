@@ -34,7 +34,12 @@ async function coolifyFetch(method: string, endpoint: string, body?: any) {
     let errorMessage = res.statusText
     try {
       const errorJson = await res.json()
-      errorMessage = errorJson.message || JSON.stringify(errorJson)
+      // Laravel extra validation errors
+      let extraErrors = ""
+      if (errorJson.errors) {
+        extraErrors = " | Validation: " + JSON.stringify(errorJson.errors)
+      }
+      errorMessage = (errorJson.message || JSON.stringify(errorJson)) + extraErrors
     } catch {
       const text = await res.text()
       errorMessage = text || res.statusText
