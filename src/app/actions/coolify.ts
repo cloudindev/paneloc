@@ -4,17 +4,23 @@ import { cookies } from "next/headers"
 import { verifyJWT } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 
-const COOLIFY_API_URL = process.env.COOLIFY_API_URL || "http://127.0.0.1:8000/api/v1"
-const COOLIFY_API_TOKEN = process.env.COOLIFY_API_TOKEN
-const COOLIFY_SERVER_UUID = process.env.COOLIFY_SERVER_UUID
-
 async function coolifyFetch(method: string, endpoint: string, body?: any) {
-  if (!COOLIFY_API_TOKEN) throw new Error("COOLIFY_API_TOKEN no configurado en entorno.")
+  const apiUrl = process.env.COOLIFY_API_URL?.trim() || "http://127.0.0.1:8000/api/v1"
+  let apiToken = process.env.COOLIFY_API_TOKEN?.trim()
   
-  const res = await fetch(`${COOLIFY_API_URL}${endpoint}`, {
+  // Limpiar si el usuario metió la palabra Bearer dentro de la variable
+  if (apiToken?.toLowerCase().startsWith("bearer ")) {
+    apiToken = apiToken.substring(7).trim()
+  }
+  // Limpiar posibles comillas arrastradas de copiar del panel
+  apiToken = apiToken?.replace(/^["']|["']$/g, "")
+
+  if (!apiToken) throw new Error("COOLIFY_API_TOKEN no configurado en entorno.")
+  
+  const res = await fetch(`${apiUrl}${endpoint}`, {
     method,
     headers: {
-      "Authorization": `Bearer ${COOLIFY_API_TOKEN}`,
+      "Authorization": `Bearer ${apiToken}`,
       "Content-Type": "application/json",
       "Accept": "application/json"
     },
@@ -56,6 +62,8 @@ export async function deployToCoolify(params: {
 
     const session = await verifyJWT(token)
     if (!session || !session.sub) throw new Error("Sesión inválida")
+
+    const COOLIFY_SERVER_UUID = process.env.COOLIFY_SERVER_UUID?.trim()
 
     if (!COOLIFY_SERVER_UUID) {
       throw new Error("COOLIFY_SERVER_UUID no configurado en el backend.")
