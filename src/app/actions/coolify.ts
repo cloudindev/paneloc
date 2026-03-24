@@ -71,8 +71,9 @@ export async function deployToCoolify(params: {
         })
         targetProjectUuid = newProj.uuid
       }
-    } catch (e) {
+    } catch (e: any) {
       console.warn("Fallo al obtener proyectos, intentando continuar", e)
+      throw new Error(`Fallo al comunicarse con la API de Coolify: ${e.message}`)
     }
 
     if (!targetProjectUuid) {
