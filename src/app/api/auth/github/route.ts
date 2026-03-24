@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server"
+import { NextResponse, NextRequest } from "next/server"
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const clientId = process.env.GITHUB_CLIENT_ID
   
   if (!clientId) {
-    return NextResponse.json({ error: "GITHUB_CLIENT_ID no configurado en el servidor" }, { status: 500 })
+    return NextResponse.redirect(new URL("/projects/new?error=GITHUB_CLIENT_ID no configurado en el servidor. Por favor, añádelo en las variables de entorno de Coolify.", request.url))
   }
 
   // Permisos: read:user (para info del perfil), user:email (para correo obvio), 

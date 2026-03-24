@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
   const clientSecret = process.env.GITHUB_CLIENT_SECRET
 
   if (!clientId || !clientSecret) {
-    return NextResponse.json({ error: "Credenciales de GitHub (CLIENT_ID o CLIENT_SECRET) no configuradas en el servidor. Revisa las variables de entorno." }, { status: 500 })
+    return NextResponse.redirect(new URL("/projects/new?error=Credenciales de GitHub (CLIENT_ID o CLIENT_SECRET) no configuradas en el servidor. Por favor, revisa tus variables en Coolify.", request.url))
   }
 
   try {
