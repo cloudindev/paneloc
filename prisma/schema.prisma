@@ -19,8 +19,9 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members   OrganizationMember[]
-  projects  Project[]
+  members     OrganizationMember[]
+  projects    Project[]
+  integrations Integration[]
 }
 
 model User {
@@ -31,7 +32,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  memberships OrganizationMember[]
+  memberships  OrganizationMember[]
+  integrations Integration[]
 }
 
 enum Role {
@@ -104,4 +106,29 @@ model Resource {
   updatedAt   DateTime     @updatedAt
 
   @@index([projectId])
+}
+
+// ----------------------------------------------------------------------------
+// INTEGRATIONS (OAUTH)
+// ----------------------------------------------------------------------------
+
+model Integration {
+  id              String       @id @default(cuid())
+  provider        String       // Ej. "github"
+  providerId      String       // ID de usuario en GitHub
+  accessToken     String
+  refreshToken    String?
+  
+  userId          String?
+  user            User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  organizationId  String?
+  organization    Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@unique([provider, providerId])
+  @@index([userId])
+  @@index([organizationId])
 }
