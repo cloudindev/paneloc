@@ -128,16 +128,18 @@ export function ProjectsGrid({ initialProjects }: { initialProjects: any[] }) {
                       )}
                     </div>
                     <div>
-                      <Link href={`/projects/${project.id}`} className="hover:underline">
+                      <Link href={`/projects/${project.id}`} className="hover:underline before:absolute before:inset-0 before:z-0">
                         <h3 className="font-semibold text-lg">{project.name}</h3>
                       </Link>
                       <p className="text-xs text-muted-foreground font-mono">{project.config?.repo || "Desconocido"}</p>
                     </div>
                   </div>
-                  <ActionMenu project={project} />
+                  <div className="z-10 relative">
+                    <ActionMenu project={project} />
+                  </div>
                 </div>
               </CardHeader>
-              <CardContent className="pb-4">
+              <CardContent className="pb-4 relative z-10">
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
                     <span className="relative flex h-2.5 w-2.5">
@@ -147,7 +149,7 @@ export function ProjectsGrid({ initialProjects }: { initialProjects: any[] }) {
                     <span className={`capitalize font-medium ${textColor}`}>{status || "pending"}</span>
                   </div>
                   {project.domain ? (
-                    <a href={project.domain.startsWith('http') ? project.domain : `http://${project.domain}`} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-primary transition-colors hover:underline truncate max-w-[150px]">
+                    <a href={project.domain.startsWith('http') ? project.domain : `http://${project.domain}`} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-primary transition-colors hover:underline truncate max-w-[150px] relative z-20">
                       {project.domain.replace(/^https?:\/\//, '')}
                     </a>
                   ) : (
