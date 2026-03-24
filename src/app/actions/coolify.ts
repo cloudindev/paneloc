@@ -119,8 +119,8 @@ export async function deployToCoolify(params: {
       project_uuid: targetProjectUuid,
       environment_name: "production",
       server_uuid: COOLIFY_SERVER_UUID,
-      github_repository: params.repoFullName,
-      github_branch: params.branch,
+      git_repository: params.repoFullName,
+      git_branch: params.branch,
       build_pack: "nixpacks", // framework string (nextjs, nodejs, etc) lo usa Nixpacks internamente de todas formas.
       name: params.projectName,
     }
