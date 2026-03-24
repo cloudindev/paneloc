@@ -1,14 +1,21 @@
 "use client"
 
 import * as React from "react"
-import { Rocket, GitBranch, HardDrive, TerminalSquare, Box, Server, Github, Search } from "lucide-react"
+import { Rocket, GitBranch, HardDrive, TerminalSquare, Box, Server, Github, Search, Lock, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
-export function DeploymentWizard() {
+export function DeploymentWizard({ repositories }: { repositories: any[] }) {
   const [framework, setFramework] = React.useState("nextjs")
   const [isDeploying, setIsDeploying] = React.useState(false)
+  const [search, setSearch] = React.useState("")
+  const [selectedRepo, setSelectedRepo] = React.useState<any | null>(null)
+
+  const filteredRepos = repositories.filter(repo => 
+    repo.fullName.toLowerCase().includes(search.toLowerCase()) ||
+    repo.name.toLowerCase().includes(search.toLowerCase())
+  )
 
   const deploy = () => {
     setIsDeploying(true)
@@ -22,7 +29,7 @@ export function DeploymentWizard() {
       {/* Left Col - Wizard Form */}
       <div className="md:col-span-2 space-y-6">
         
-        {/* REPOSITORIOS OAUTH (Mock por ahora, Fase 2 los rellenará) */}
+        {/* REPOSITORIOS OAUTH */}
         <Card className="bg-card/40 border-border/50">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -40,22 +47,71 @@ export function DeploymentWizard() {
           <CardContent className="space-y-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Buscar repositorio..." className="pl-9 bg-background/50" />
+              <Input 
+                placeholder="Buscar repositorio..." 
+                className="pl-9 bg-background/50" 
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
             </div>
-            <div className="rounded-md border border-border/50 bg-background/30 p-8 text-center">
-              <p className="text-sm text-muted-foreground">
-                Cargando repositorios... (Fase 2)
-              </p>
+            
+            <div className="rounded-md border border-border/50 bg-background/30 max-h-[340px] overflow-y-auto">
+              {filteredRepos.length === 0 ? (
+                <div className="p-12 text-center text-sm text-muted-foreground flex flex-col items-center gap-3">
+                  <Github className="h-8 w-8 opacity-20" />
+                  No se encontraron repositorios.
+                </div>
+              ) : (
+                <div className="divide-y divide-border/50">
+                  {filteredRepos.map((repo) => (
+                    <div 
+                      key={repo.id} 
+                      className={`flex items-center justify-between p-4 transition-colors hover:bg-muted/50 ${selectedRepo?.id === repo.id ? 'bg-primary/5 border-l-2 border-primary' : ''}`}
+                    >
+                      <div className="flex items-center gap-4 overflow-hidden">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-background border shadow-sm">
+                          <Github className="h-5 w-5 text-foreground/80" />
+                        </div>
+                        <div className="truncate">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold truncate">{repo.name}</span>
+                            {repo.private && <Lock className="h-3 w-3 text-muted-foreground" />}
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                            <span className="flex items-center gap-1">
+                              <span className="h-2 w-2 rounded-full bg-primary/70"></span>
+                              {repo.language || "Unknown"}
+                            </span>
+                            <span className="flex items-center gap-1 shrink-0">
+                              <span className="opacity-50">•</span>
+                              <Clock className="h-3 w-3 ml-1" />
+                              {new Date(repo.updatedAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <Button 
+                        variant={selectedRepo?.id === repo.id ? "secondary" : "default"}
+                        size="sm"
+                        className="shrink-0 ml-4 shadow-sm"
+                        onClick={() => setSelectedRepo(repo)}
+                      >
+                        {selectedRepo?.id === repo.id ? "Seleccionado" : "Importar"}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
 
         {/* SETTINGS MANUALES */}
-        <Card className="bg-card/40 border-border/50 opacity-50 pointer-events-none">
+        <Card className={`bg-card/40 border-border/50 transition-opacity ${!selectedRepo ? 'opacity-50 pointer-events-none' : ''}`}>
           <CardHeader>
             <CardTitle>Configuración de Despliegue</CardTitle>
             <CardDescription>
-              Personaliza el entorno y comandos (Se activará tras importar repo).
+              Personaliza el entorno y comandos para {selectedRepo?.name || "tu proyecto"}.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -63,7 +119,12 @@ export function DeploymentWizard() {
               <label className="text-sm font-medium leading-none">
                 Nombre del Proyecto
               </label>
-              <Input placeholder="mi-super-app" disabled className="bg-background/50" />
+              <Input 
+                placeholder="Selecciona un repositorio primero" 
+                className="bg-background/50" 
+                value={selectedRepo ? selectedRepo.name.toLowerCase() : ""}
+                readOnly
+              />
               <p className="text-xs text-muted-foreground">
                 Se usará para generar el subdominio gratuito inicial.
               </p>
@@ -86,11 +147,11 @@ export function DeploymentWizard() {
           </CardContent>
         </Card>
 
-        <Card className="bg-card/40 border-border/50 opacity-50 pointer-events-none">
+        <Card className={`bg-card/40 border-border/50 transition-opacity ${!selectedRepo ? 'opacity-50 pointer-events-none' : ''}`}>
           <CardHeader>
             <CardTitle>Entorno de Ejecución Automático</CardTitle>
             <CardDescription>
-              Nixpacks detectará esto automáticamente.
+              Nixpacks detectará esto automáticamente. Puedes forzar uno.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -103,11 +164,11 @@ export function DeploymentWizard() {
               ].map((fw) => (
                 <button
                   key={fw.id}
-                  disabled
+                  onClick={() => setFramework(fw.id)}
                   className={`flex flex-col items-center justify-center space-y-2 rounded-xl border p-4 transition-colors ${
                     framework === fw.id
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border/50 bg-background/50 text-muted-foreground"
+                      ? "border-primary bg-primary/10 text-primary shadow-sm"
+                      : "border-border/50 bg-background/50 text-muted-foreground hover:bg-muted/50"
                   }`}
                 >
                   <fw.icon className={`h-8 w-8 ${framework === fw.id ? "text-primary" : ""}`} />
@@ -136,7 +197,9 @@ export function DeploymentWizard() {
             </div>
             <div className="flex justify-between border-b border-border/50 pb-2">
               <span className="text-muted-foreground">Rama Auto-Deploy</span>
-              <span className="font-medium flex items-center gap-1"><GitBranch className="w-3 h-3"/> main</span>
+              <span className="font-medium flex items-center gap-1 truncate w-32 justify-end">
+                <GitBranch className="w-3 h-3 shrink-0"/> {selectedRepo ? selectedRepo.defaultBranch : "main"}
+              </span>
             </div>
           </CardContent>
           <CardFooter>
@@ -144,12 +207,19 @@ export function DeploymentWizard() {
               className="w-full text-primary-foreground font-semibold" 
               size="lg"
               onClick={deploy}
-              disabled={true}
+              disabled={!selectedRepo || isDeploying}
             >
-              <span className="flex items-center gap-2">
-                <Rocket className="h-5 w-5" />
-                Esperando Repositorio...
-              </span>
+              {isDeploying ? (
+                <span className="flex items-center gap-2">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                  Iniciando Instancia...
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <Rocket className="h-5 w-5" />
+                  {selectedRepo ? "Lanzar Aplicación" : "Esperando Repositorio..."}
+                </span>
+              )}
             </Button>
           </CardFooter>
         </Card>

@@ -3,7 +3,7 @@ import Link from "next/link"
 import { ArrowLeft, Github } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { checkGithubConnection } from "@/app/actions/github"
+import { checkGithubConnection, getGithubRepositories } from "@/app/actions/github"
 import { DeploymentWizard } from "./deployment-wizard"
 
 export default async function NewProjectPage({ searchParams }: { searchParams: Promise<{ github_connected?: string, error?: string }> }) {
@@ -13,6 +13,11 @@ export default async function NewProjectPage({ searchParams }: { searchParams: P
   const resolvedParams = await searchParams
   const errorMsg = resolvedParams.error
   const successMsg = resolvedParams.github_connected === "true" ? "Cuenta de GitHub conectada con éxito." : null
+
+  let repositories: any[] = []
+  if (isConnected) {
+    repositories = await getGithubRepositories()
+  }
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 pb-12">
@@ -64,7 +69,7 @@ export default async function NewProjectPage({ searchParams }: { searchParams: P
           </CardFooter>
         </Card>
       ) : (
-        <DeploymentWizard />
+        <DeploymentWizard repositories={repositories} />
       )}
     </div>
   )
