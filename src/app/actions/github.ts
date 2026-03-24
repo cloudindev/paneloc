@@ -12,6 +12,10 @@ export async function checkGithubConnection() {
 
     const session = await verifyJWT(token)
     
+    if (!session || !session.sub) {
+      return { isConnected: false }
+    }
+    
     const integration = await prisma.integration.findFirst({
       where: {
         userId: session.sub,
