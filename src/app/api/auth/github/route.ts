@@ -1,9 +1,10 @@
 import { NextResponse, NextRequest } from "next/server"
 
 export async function GET(request: NextRequest) {
-  const host = request.headers.get('x-forwarded-host') || request.headers.get('host')
-  const protocol = request.headers.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https')
-  const origin = `${protocol}://${host}`
+  // Traefik en Coolify a veces reescribe el Host al FQDN interno (sslip.io). 
+  // La forma más robusta es usar la variable de entorno o tu dominio fijo de producción.
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://panel.olacloud.es"
+  const origin = appUrl.endsWith('/') ? appUrl.slice(0, -1) : appUrl
 
   const clientId = process.env.GITHUB_CLIENT_ID
   
