@@ -40,6 +40,8 @@ function ActionMenu({ project }: { project: any }) {
   )
 }
 
+import Link from "next/link"
+
 export function ProjectsGrid({ initialProjects }: { initialProjects: any[] }) {
   const [projects, setProjects] = React.useState(initialProjects)
   const [search, setSearch] = React.useState("")
@@ -126,7 +128,9 @@ export function ProjectsGrid({ initialProjects }: { initialProjects: any[] }) {
                       )}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-lg">{project.name}</h3>
+                      <Link href={`/projects/${project.id}`} className="hover:underline">
+                        <h3 className="font-semibold text-lg">{project.name}</h3>
+                      </Link>
                       <p className="text-xs text-muted-foreground font-mono">{project.config?.repo || "Desconocido"}</p>
                     </div>
                   </div>

@@ -63,3 +63,46 @@ export async function getProjectsFromDB() {
     return []
   }
 }
+
+export async function getResourceById(id: string) {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get("olacloud_session")?.value
+    if (!token) throw new Error("No estás autenticado")
+
+    const session = await verifyJWT(token)
+    if (!session || !session.sub) throw new Error("Sesión inválida")
+
+    const resource = await prisma.resource.findUnique({
+      where: { id },
+      include: {
+        project: {
+          include: {
+            organization: {
+              include: {
+                memberships: {
+                  where: { userId: session.sub }
+                }
+              }
+            }
+          }
+        }
+      }
+    })
+
+    if (!resource || resource.project.organization.memberships.length === 0) {
+      throw new Error("Recurso no encontrado o sin permisos")
+    }
+
+    return {
+      id: resource.id,
+      name: resource.name,
+      status: resource.status,
+      createdAt: resource.createdAt,
+      config: typeof resource.config === "string" ? JSON.parse(resource.config) : resource.config,
+    }
+  } catch (error) {
+    console.error("Error fetching resource:", error)
+    return null
+  }
+}
