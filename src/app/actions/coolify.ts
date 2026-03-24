@@ -73,7 +73,8 @@ export async function deployToCoolify(params: {
       }
     } catch (e: any) {
       console.warn("Fallo al obtener proyectos, intentando continuar", e)
-      throw new Error(`Fallo al comunicarse con la API de Coolify: ${e.message}`)
+      const cause = e.cause ? e.cause.message || e.cause.code : ""
+      throw new Error(`Fallo al comunicarse con la API de Coolify: ${e.message} ${cause}`)
     }
 
     if (!targetProjectUuid) {
