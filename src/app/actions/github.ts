@@ -89,3 +89,26 @@ export async function getGithubRepositories() {
     return []
   }
 }
+
+export async function disconnectGithub() {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get("olacloud_session")?.value
+    if (!token) return { success: false, error: "No session found" }
+
+    const session = await verifyJWT(token)
+    if (!session || !session.sub) return { success: false, error: "Invalid session" }
+
+    await prisma.integration.deleteMany({
+      where: {
+        userId: session.sub,
+        provider: "github"
+      }
+    })
+
+    return { success: true }
+  } catch (error) {
+    console.error("Error disconnecting github:", error)
+    return { success: false, error: "Internal server error" }
+  }
+}

@@ -1,14 +1,16 @@
 "use client"
 
 import * as React from "react"
-import { Rocket, GitBranch, HardDrive, TerminalSquare, Box, Server, Github, Search, Lock, Clock } from "lucide-react"
+import { Rocket, GitBranch, HardDrive, TerminalSquare, Box, Server, Github, Search, Lock, Clock, Unplug } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { disconnectGithub } from "@/app/actions/github"
 
 export function DeploymentWizard({ repositories }: { repositories: any[] }) {
   const [framework, setFramework] = React.useState("nextjs")
   const [isDeploying, setIsDeploying] = React.useState(false)
+  const [isDisconnecting, setIsDisconnecting] = React.useState(false)
   const [search, setSearch] = React.useState("")
   const [selectedRepo, setSelectedRepo] = React.useState<any | null>(null)
 
@@ -22,6 +24,17 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
     setTimeout(() => {
       window.location.href = "/projects"
     }, 2000)
+  }
+
+  const handleDisconnect = async () => {
+    setIsDisconnecting(true)
+    const res = await disconnectGithub()
+    if (res.success) {
+      window.location.href = "/projects/new"
+    } else {
+      setIsDisconnecting(false)
+      alert("Error al desconectar GitHub")
+    }
   }
 
   return (
@@ -42,6 +55,20 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
                   Selecciona uno de tus repositorios conectados.
                 </CardDescription>
               </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleDisconnect}
+                disabled={isDisconnecting}
+                className="text-muted-foreground hover:text-destructive hover:border-destructive/30 border-border/50"
+              >
+                {isDisconnecting ? (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                ) : (
+                  <Unplug className="h-4 w-4 mr-2" />
+                )}
+                Desconectar
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
