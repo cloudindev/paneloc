@@ -17,8 +17,8 @@ export function Navbar({ projects = [], organization = "Personal" }: { projects?
   // Determine valid active project from URL if inside a project
   const projectIdMatch = pathname.match(/^\/projects\/([^/]+)/)
   const currentProjectId = projectIdMatch && projectIdMatch[1] !== 'new' ? projectIdMatch[1] : null
-  const currentProject = currentProjectId ? projects.find(p => p.resources?.some((r: any) => r.id === currentProjectId)) : null
-  const resourceParams = currentProjectId ? projects.flatMap(p => p.resources).find(r => r.id === currentProjectId) : null
+  const currentProject = currentProjectId ? projects.find(p => p.id === currentProjectId) : null
+  const resourceParams = currentProject
 
   // Click outside listener
   React.useEffect(() => {
@@ -29,9 +29,8 @@ export function Navbar({ projects = [], organization = "Personal" }: { projects?
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  // Flatten resources for switcher
-  const allResources = projects.flatMap(p => p.resources || [])
-  const filteredResources = allResources.filter(r => r.name.toLowerCase().includes(searchQuery.toLowerCase()))
+  // Flattened resources for switcher
+  const filteredResources = projects.filter(r => r.name.toLowerCase().includes(searchQuery.toLowerCase()))
 
   return (
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
