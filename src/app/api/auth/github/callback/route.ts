@@ -4,11 +4,15 @@ import { verifyJWT } from "@/lib/auth"
 import { cookies } from "next/headers"
 
 export async function GET(request: NextRequest) {
+  const host = request.headers.get('x-forwarded-host') || request.headers.get('host')
+  const protocol = request.headers.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https')
+  const origin = `${protocol}://${host}`
+
   const searchParams = request.nextUrl.searchParams
   const code = searchParams.get("code")
 
   if (!code) {
-    return NextResponse.json({ error: "Code no proporcionado desde GitHub." }, { status: 400 })
+    return NextResponse.redirect(new URL("/projects/new?error=Code no proporcionado desde GitHub.", origin))
   }
 
   // Verificar sesión actual (el usuario debe estar logueado para conectar su GitHub)
@@ -16,21 +20,21 @@ export async function GET(request: NextRequest) {
   const token = cookieStore.get("olacloud_session")?.value
 
   if (!token) {
-    return NextResponse.redirect(new URL("/login?error=Se requiere iniciar sesión antes de conectar GitHub", request.url))
+    return NextResponse.redirect(new URL("/login?error=Se requiere iniciar sesión antes de conectar GitHub", origin))
   }
 
   let session: any
   try {
     session = await verifyJWT(token)
   } catch (error) {
-    return NextResponse.redirect(new URL("/login?error=Sesión inválida al conectar GitHub", request.url))
+    return NextResponse.redirect(new URL("/login?error=Sesión inválida al conectar GitHub", origin))
   }
 
   const clientId = process.env.GITHUB_CLIENT_ID
   const clientSecret = process.env.GITHUB_CLIENT_SECRET
 
   if (!clientId || !clientSecret) {
-    return NextResponse.redirect(new URL("/projects/new?error=Credenciales de GitHub (CLIENT_ID o CLIENT_SECRET) no configuradas en el servidor. Por favor, revisa tus variables en Coolify.", request.url))
+    return NextResponse.redirect(new URL("/projects/new?error=Credenciales de GitHub (CLIENT_ID o CLIENT_SECRET) no configuradas en el servidor. Por favor, revisa tus variables en Coolify.", origin))
   }
 
   try {
@@ -53,7 +57,7 @@ export async function GET(request: NextRequest) {
 
     if (!accessToken) {
       console.error("GitHub Auth Error intercambiando código:", tokenData)
-      return NextResponse.redirect(new URL("/projects/new?error=Error intercambiando el código de GitHub (Revisa el Client Secret)", request.url))
+      return NextResponse.redirect(new URL("/projects/new?error=Error intercambiando el código de GitHub (Revisa el Client Secret)", origin))
     }
 
     // 2. Obtener identidad básica del usuario en GitHub
@@ -87,10 +91,10 @@ export async function GET(request: NextRequest) {
     })
 
     // Éxito: Volvemos a la vista de "Nueva App" donde el UI ahora verá la conexión activada
-    return NextResponse.redirect(new URL("/projects/new?github_connected=true", request.url))
+    return NextResponse.redirect(new URL("/projects/new?github_connected=true", origin))
 
   } catch (error: any) {
     console.error("Error grave en callback de GitHub:", error)
-    return NextResponse.redirect(new URL("/projects/new?error=Error interno conectando con GitHub", request.url))
+    return NextResponse.redirect(new URL("/projects/new?error=Error interno conectando con GitHub", origin))
   }
 }
