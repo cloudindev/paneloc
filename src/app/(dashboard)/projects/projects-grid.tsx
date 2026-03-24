@@ -1,12 +1,44 @@
 "use client"
 
 import * as React from "react"
-import { Search, Globe2, Server, TerminalSquare, RotateCcw, Play, Square, MoreVertical } from "lucide-react"
+import { Search, Globe2, Server, TerminalSquare, RotateCcw, Play, Square, MoreVertical, GitBranch } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { getLiveProjectStatus } from "@/app/actions/coolify"
+
+function ActionMenu({ project }: { project: any }) {
+  const [open, setOpen] = React.useState(false)
+  const menuRef = React.useRef<HTMLDivElement>(null)
+
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [menuRef])
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setOpen(!open)}>
+        <MoreVertical className="h-4 w-4" />
+      </Button>
+      {open && (
+        <div className="absolute right-0 top-10 w-48 rounded-md bg-popover border border-border shadow-md z-50 p-1 animate-in fade-in zoom-in-95 data-[side=bottom]:slide-in-from-top-2">
+          <button className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+            <RotateCcw className="h-4 w-4 mr-2" /> Reiniciar (WIP)
+          </button>
+          <button className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent focus:bg-accent text-red-400 hover:text-red-500 data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+            <Square className="h-4 w-4 mr-2" /> Detener (WIP)
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export function ProjectsGrid({ initialProjects }: { initialProjects: any[] }) {
   const [projects, setProjects] = React.useState(initialProjects)
@@ -98,17 +130,7 @@ export function ProjectsGrid({ initialProjects }: { initialProjects: any[] }) {
                       <p className="text-xs text-muted-foreground font-mono">{project.config?.repo || "Desconocido"}</p>
                     </div>
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem><RotateCcw className="h-4 w-4 mr-2" /> Reiniciar (WIP)</DropdownMenuItem>
-                      <DropdownMenuItem className="text-red-400 focus:text-red-400"><Square className="h-4 w-4 mr-2" /> Detener (WIP)</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <ActionMenu project={project} />
                 </div>
               </CardHeader>
               <CardContent className="pb-4">
