@@ -4,8 +4,9 @@ import { ProjectDetailView } from "./project-detail-view"
 
 export const dynamic = 'force-dynamic'
 
-export default async function ProjectDetailPage({ params }: { params: { id: string } }) {
-  const resource = await getResourceById(params.id)
+export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const resource = await getResourceById(id)
 
   if (!resource) {
     notFound()
