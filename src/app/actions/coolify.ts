@@ -21,11 +21,17 @@ async function coolifyFetch(method: string, endpoint: string, body?: any) {
     body: body ? JSON.stringify(body) : undefined,
   })
 
-  // Algunas respuestas como el dispatch no devuelven JSON parseable o pueden dar 201/200 OK.
   if (!res.ok) {
-    const text = await res.text()
-    console.error(`Coolify API Error (${endpoint}):`, text)
-    throw new Error(`Coolify Error: ${res.statusText}`)
+    let errorMessage = res.statusText
+    try {
+      const errorJson = await res.json()
+      errorMessage = errorJson.message || JSON.stringify(errorJson)
+    } catch {
+      const text = await res.text()
+      errorMessage = text || res.statusText
+    }
+    console.error(`Coolify API Error (${res.status} ${endpoint}):`, errorMessage)
+    throw new Error(`Coolify Error: ${res.status} - ${errorMessage}`)
   }
 
   // Check if it's json
