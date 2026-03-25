@@ -115,6 +115,17 @@ export async function deployToCoolify(params: {
        // Podríamos abortar aquí si el Coolify no soporta public github endpoint para privados (normalmente falla).
     }
 
+    // 2.A Generación de Dominio Custom Vercel-like (*.apps.olacloud.es)
+    // Limpiamos el nombre para que solo tenga letras minúsculas, números y guiones
+    const slugifiedName = params.projectName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+    
+    // Leemos el base domain de env var si existe, sino usamos el wildcard acordado
+    const baseDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || "apps.olacloud.es"
+    const customFqdn = `https://${slugifiedName}.${baseDomain}`
+
     const appPayload = {
       project_uuid: targetProjectUuid,
       environment_name: "production",
@@ -124,6 +135,7 @@ export async function deployToCoolify(params: {
       build_pack: "nixpacks", // framework string (nextjs, nodejs, etc) lo usa Nixpacks internamente de todas formas.
       ports_exposes: "3000",
       name: params.projectName,
+      fqdn: customFqdn // <- Auto FQDN asignado por API
     }
 
     const appCreated = await coolifyFetch("POST", "/applications/public", appPayload)
@@ -170,7 +182,8 @@ export async function deployToCoolify(params: {
           repo: params.repoFullName,
           branch: params.branch,
           framework: params.framework,
-          coolify_server: COOLIFY_SERVER_UUID
+          coolify_server: COOLIFY_SERVER_UUID,
+          domain: customFqdn // <- Lo guardamos nativo también por fallback
         }
       }
     })
