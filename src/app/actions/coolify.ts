@@ -135,7 +135,6 @@ export async function deployToCoolify(params: {
       build_pack: "nixpacks", // framework string (nextjs, nodejs, etc) lo usa Nixpacks internamente de todas formas.
       ports_exposes: "3000",
       name: params.projectName,
-      fqdn: customFqdn // <- Auto FQDN asignado por API
     }
 
     const appCreated = await coolifyFetch("POST", "/applications/public", appPayload)
@@ -143,6 +142,13 @@ export async function deployToCoolify(params: {
 
     if (!appUuid) {
       throw new Error("La API de Coolify no devolvió un UUID para la aplicación creada.")
+    }
+
+    // 2.B Inyectar el FQDN generado mediante un update al recurso tras su creación
+    try {
+      await coolifyFetch("PATCH", `/applications/${appUuid}`, { fqdn: customFqdn })
+    } catch (e: any) {
+      console.warn("Aviso: el update de FQDN falló", e.message)
     }
 
     // 3. Registrar el recurso en nuestra base de datos atado a este cliente
