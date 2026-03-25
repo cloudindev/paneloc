@@ -235,8 +235,15 @@ export async function deleteAppFromCoolify(uuid: string) {
     if (!session || !session.sub) throw new Error("Sesión inválida")
 
     // Llamada a la API de delete de Coolify v4
-    // Usamos el endpoint adecuado, si el body json con force:true
-    await coolifyFetch("DELETE", `/applications/${uuid}`, { force: true })
+    // Los flags de borrado deben ir en la URL (query params), no en el body JSON.
+    const query = new URLSearchParams({
+      force: 'true',
+      delete_configurations: 'true',
+      delete_volumes: 'true',
+      docker_cleanup: 'true'
+    }).toString()
+
+    await coolifyFetch("DELETE", `/applications/${uuid}?${query}`)
     
     return { success: true }
   } catch (error: any) {

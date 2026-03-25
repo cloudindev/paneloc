@@ -209,7 +209,10 @@ export async function deleteProjectAction(id: string) {
     if (config?.coolify_uuid) {
       const deletionRes = await deleteAppFromCoolify(config.coolify_uuid)
       if (!deletionRes.success) {
-        console.warn(`No se pudo eliminar de Coolify (quizá ya no exista). Error: ${deletionRes.error}`)
+        // En caso de que recibamos un error, solo ignoramos si el error es 404 (ya estaba borrado)
+        if (!deletionRes.error?.includes("404")) {
+          throw new Error(`Coolify denegó el borrado: ${deletionRes.error}`)
+        }
       }
     }
 
