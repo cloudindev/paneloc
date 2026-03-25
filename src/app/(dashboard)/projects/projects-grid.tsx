@@ -1,14 +1,16 @@
 "use client"
 
 import * as React from "react"
-import { Search, Globe2, Server, TerminalSquare, RotateCcw, Play, Square, MoreVertical, GitBranch } from "lucide-react"
+import { deleteProjectAction } from "@/app/actions/projects"
+import { Search, Globe2, Server, TerminalSquare, RotateCcw, Play, Square, MoreVertical, GitBranch, Trash2, Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { getLiveProjectStatus } from "@/app/actions/coolify"
 
-function ActionMenu({ project }: { project: any }) {
+function ActionMenu({ project, onDelete }: { project: any, onDelete: (id: string) => void }) {
   const [open, setOpen] = React.useState(false)
+  const [isDeleting, startDeleting] = React.useTransition()
   const menuRef = React.useRef<HTMLDivElement>(null)
 
   React.useEffect(() => {
@@ -21,10 +23,24 @@ function ActionMenu({ project }: { project: any }) {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [menuRef])
 
+  const handleDelete = () => {
+    if (confirm(`⚠️ PELIGRO:\n¿Estás seguro de que quieres eliminar PERMANENTEMENTE el proyecto "${project.name}"?\nSe destruirá su contenedor en Coolify y no se podrá deshacer.`)) {
+      startDeleting(async () => {
+        const res = await deleteProjectAction(project.id)
+        if (res.success) {
+          onDelete(project.id)
+        } else {
+          alert(`Error al eliminar: ${res.error}`)
+        }
+        setOpen(false)
+      })
+    }
+  }
+
   return (
     <div className="relative" ref={menuRef}>
-      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setOpen(!open)}>
-        <MoreVertical className="h-4 w-4" />
+      <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground" onClick={() => setOpen(!open)} disabled={isDeleting}>
+        {isDeleting ? <Loader2 className="h-4 w-4 animate-spin text-destructive" /> : <MoreVertical className="h-4 w-4" />}
       </Button>
       {open && (
         <div className="absolute right-0 top-10 w-48 rounded-md bg-popover border border-border shadow-md z-50 p-1 animate-in fade-in zoom-in-95 data-[side=bottom]:slide-in-from-top-2">
@@ -33,6 +49,10 @@ function ActionMenu({ project }: { project: any }) {
           </button>
           <button className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent focus:bg-accent text-red-400 hover:text-red-500 data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
             <Square className="h-4 w-4 mr-2" /> Detener (WIP)
+          </button>
+          <div className="h-px bg-border my-1"></div>
+          <button onClick={handleDelete} className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-destructive/10 text-destructive data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+            <Trash2 className="h-4 w-4 mr-2" /> Eliminar Proyecto
           </button>
         </div>
       )}
@@ -136,7 +156,7 @@ export function ProjectsGrid({ initialProjects }: { initialProjects: any[] }) {
                     </div>
                   </div>
                   <div className="pointer-events-auto">
-                    <ActionMenu project={project} />
+                    <ActionMenu project={project} onDelete={(id) => setProjects(prev => prev.filter(p => p.id !== id))} />
                   </div>
                 </div>
               </CardHeader>

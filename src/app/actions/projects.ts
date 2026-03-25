@@ -169,3 +169,59 @@ export async function getResourceById(id: string) {
     return null
   }
 }
+
+import { deleteAppFromCoolify } from "./coolify"
+import { revalidatePath } from "next/cache"
+
+export async function deleteProjectAction(id: string) {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get("olacloud_session")?.value
+    if (!token) throw new Error("No estás autenticado")
+
+    const session = await verifyJWT(token)
+    if (!session || !session.sub) throw new Error("Sesión inválida")
+
+    // Retrieve resource and verify ownership
+    const resource = await prisma.resource.findUnique({
+      where: { id },
+      include: {
+        project: {
+          include: {
+            organization: {
+              include: {
+                members: {
+                  where: { userId: session.sub }
+                }
+              }
+            }
+          }
+        }
+      }
+    })
+
+    if (!resource || resource.project.organization.members.length === 0) {
+      throw new Error("Recurso no encontrado o no tienes permisos para eliminarlo")
+    }
+
+    // Call Coolify to delete the application container and volumes
+    const config = typeof resource.config === "string" ? JSON.parse(resource.config) : resource.config
+    if (config?.coolify_uuid) {
+      const deletionRes = await deleteAppFromCoolify(config.coolify_uuid)
+      if (!deletionRes.success) {
+        console.warn(`No se pudo eliminar de Coolify (quizá ya no exista). Error: ${deletionRes.error}`)
+      }
+    }
+
+    // Delete from our local database
+    await prisma.resource.delete({
+      where: { id }
+    })
+
+    revalidatePath("/projects")
+    return { success: true }
+  } catch (error: any) {
+    console.error("Error deleting project:", error)
+    return { success: false, error: error.message }
+  }
+}

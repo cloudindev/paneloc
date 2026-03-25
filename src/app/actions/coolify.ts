@@ -194,13 +194,40 @@ export async function deployToCoolify(params: {
 export async function getLiveProjectStatus(uuid: string) {
   try {
     const res = await coolifyFetch("GET", `/applications/${uuid}`)
+    
+    // FQDN returned by Coolify might be a comma-separated list of URLs (e.g. "http://domain.com,https://domain.com")
+    let parsedFqdn = res.fqdn
+    if (parsedFqdn && parsedFqdn.includes(",")) {
+      parsedFqdn = parsedFqdn.split(",")[0].trim()
+    }
+
     return {
       success: true,
       status: res.status, // ej. "running", "exited", etc
-      fqdn: res.fqdn,
+      fqdn: parsedFqdn,
       updated_at: res.updated_at
     }
   } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+}
+
+export async function deleteAppFromCoolify(uuid: string) {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get("olacloud_session")?.value
+    if (!token) throw new Error("No estás autenticado")
+
+    const session = await verifyJWT(token)
+    if (!session || !session.sub) throw new Error("Sesión inválida")
+
+    // Llamada a la API de delete de Coolify v4
+    // Usamos el endpoint adecuado, si el body json con force:true
+    await coolifyFetch("DELETE", `/applications/${uuid}`, { force: true })
+    
+    return { success: true }
+  } catch (error: any) {
+    console.error("Error eliminando aplicación en Coolify:", error)
     return { success: false, error: error.message }
   }
 }
