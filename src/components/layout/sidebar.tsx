@@ -20,8 +20,6 @@ import { cn } from "@/lib/utils"
 const globalNavigation = [
   { name: 'Proyectos', href: '/projects', icon: FolderGit2 },
   { name: 'Dominios', href: '/domains', icon: Globe },
-  { name: 'Logs básicos', href: '/logs', icon: TerminalSquare },
-  { name: 'Variables globales', href: '/env-vars', icon: KeyRound },
   { name: 'Bases de datos', href: '/databases', icon: Database },
 ]
 
