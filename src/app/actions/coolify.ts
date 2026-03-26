@@ -286,3 +286,17 @@ export async function triggerDeployment(uuid: string, force: boolean = false) {
     return { success: false, error: error.message }
   }
 }
+
+export async function getDeploymentTaskLogs(deploymentUuid: string) {
+  try {
+    const res = await coolifyFetch("GET", `/deployments/${deploymentUuid}`)
+    return { 
+      success: true, 
+      logs: res.logs || "", 
+      status: res.status 
+    }
+  } catch (error: any) {
+    console.error("Error obteniendo logs de despliegue:", error)
+    return { success: false, error: error.message, logs: "", status: "unknown" }
+  }
+}
