@@ -110,7 +110,15 @@ export function ProjectsGrid({ initialProjects }: { initialProjects: any[] }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filtered.map((project) => {
-          const rawStatus = (project.liveStatus || project.status).toLowerCase()
+          let rawStatus = (project.liveStatus || project.status).toLowerCase()
+          
+          // Si el estado es exited pero el proyecto se creó hace menos de 4 minutos, 
+          // probablemente el primer despliegue base (Nixpacks) siga corriendo en Coolify.
+          const isRecentlyCreated = new Date().getTime() - new Date(project.createdAt).getTime() < 4 * 60 * 1000
+          if (rawStatus.includes("exited") && isRecentlyCreated) {
+            rawStatus = "in progress"
+          }
+
           const status = rawStatus.split(":")[0] // clean "running:unknown" or "exited:expected"
           
           // Estilizado dinámico de anillos de estado Cloud
@@ -121,7 +129,7 @@ export function ProjectsGrid({ initialProjects }: { initialProjects: any[] }) {
             ringColor = "bg-emerald-500"
             textColor = "text-emerald-500" 
           }
-          else if (rawStatus.includes("building") || rawStatus.includes("deploying") || rawStatus.includes("starting")) { 
+          else if (rawStatus.includes("building") || rawStatus.includes("deploying") || rawStatus.includes("starting") || rawStatus.includes("in progress")) { 
             ringColor = "bg-yellow-500 animate-pulse"
             textColor = "text-yellow-500" 
           }
@@ -133,6 +141,8 @@ export function ProjectsGrid({ initialProjects }: { initialProjects: any[] }) {
             ringColor = "bg-red-500"
             textColor = "text-red-500" 
           }
+
+          const isRunning = rawStatus.includes("running")
 
           return (
             <Card key={project.id} className="group relative overflow-hidden bg-card/40 backdrop-blur-sm border border-border/50 hover:border-border transition-all hover:shadow-sm">
@@ -164,17 +174,17 @@ export function ProjectsGrid({ initialProjects }: { initialProjects: any[] }) {
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
                     <span className="relative flex h-2.5 w-2.5">
-                      {rawStatus.includes("running") && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>}
+                      {isRunning && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>}
                       <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${ringColor}`}></span>
                     </span>
                     <span className={`capitalize font-medium ${textColor}`}>{status || "pending"}</span>
                   </div>
-                  {project.domain ? (
+                  {project.domain && isRunning ? (
                     <a href={project.domain.startsWith('http') ? project.domain : `http://${project.domain}`} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-primary transition-colors hover:underline truncate max-w-[150px] relative z-20 pointer-events-auto">
                       {project.domain.replace(/^https?:\/\//, '')}
                     </a>
                   ) : (
-                    <span className="text-muted-foreground text-xs italic">Generando dominio...</span>
+                    <span className="text-muted-foreground text-xs italic">{!isRunning && project.domain ? "Esperando compilación..." : "Asignando dominio..."}</span>
                   )}
                 </div>
               </CardContent>
