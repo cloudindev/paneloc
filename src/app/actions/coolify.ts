@@ -257,3 +257,32 @@ export async function deleteAppFromCoolify(uuid: string) {
     return { success: false, error: error.message }
   }
 }
+
+export async function getApplicationDeployments(uuid: string) {
+  try {
+    const res = await coolifyFetch("GET", `/applications/${uuid}/deployments`)
+    // res should be an array of deployments or an object with data array depending on Coolify V4 pagination
+    const deployments = Array.isArray(res) ? res : (res?.data || [])
+    return { success: true, deployments }
+  } catch (error: any) {
+    console.error("Error obteniendo despliegues:", error)
+    return { success: false, error: error.message, deployments: [] }
+  }
+}
+
+export async function triggerDeployment(uuid: string, force: boolean = false) {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get("olacloud_session")?.value
+    if (!token) throw new Error("No estás autenticado")
+
+    const session = await verifyJWT(token)
+    if (!session || !session.sub) throw new Error("Sesión inválida")
+
+    await coolifyFetch("POST", `/deploy?uuid=${uuid}&force=${force}`)
+    return { success: true }
+  } catch (error: any) {
+    console.error("Error forzando redespliegue:", error)
+    return { success: false, error: error.message }
+  }
+}
