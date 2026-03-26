@@ -17,16 +17,18 @@ export default async function DeploymentsPage({ params }: { params: Promise<{ id
   const coolifyUuid = config?.coolify_uuid
 
   let initialDeployments: any[] = []
+  let apiDebug = ""
   if (coolifyUuid) {
     const res = await getApplicationDeployments(coolifyUuid)
     if (res.success) {
       initialDeployments = res.deployments
+      apiDebug = (res as any).debug || ""
     }
   }
 
   return (
-    <div className="flex-1 space-y-6">
-      <DeploymentsList resource={resource} initialDeployments={initialDeployments} />
+    <div className="flex flex-1 h-full flex-col space-y-6">
+      <DeploymentsList resource={resource} initialDeployments={initialDeployments} initialDebug={apiDebug} />
     </div>
   )
 }

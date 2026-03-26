@@ -7,7 +7,7 @@ import { RotateCw, GitCommit, Clock, CheckCircle2, XCircle, Loader2 } from "luci
 import { getApplicationDeployments, triggerDeployment } from "@/app/actions/coolify"
 import { useRouter } from "next/navigation"
 
-export function DeploymentsList({ resource, initialDeployments }: { resource: any, initialDeployments: any[] }) {
+export function DeploymentsList({ resource, initialDeployments, initialDebug }: { resource: any, initialDeployments: any[], initialDebug?: string }) {
   const [deployments, setDeployments] = React.useState(initialDeployments)
   const [isDeploying, setIsDeploying] = React.useState(false)
   const router = useRouter()
@@ -93,8 +93,14 @@ export function DeploymentsList({ resource, initialDeployments }: { resource: an
       </CardHeader>
       <CardContent>
         {deployments.length === 0 ? (
-          <div className="text-center py-12 border border-dashed rounded-lg bg-card/20 text-muted-foreground">
-            No hay despliegues registrados para esta aplicación.
+          <div className="text-center py-12 border border-dashed rounded-lg bg-card/20 text-muted-foreground flex flex-col items-center">
+            <p>No hay despliegues registrados para esta aplicación.</p>
+            {initialDebug && (
+              <div className="mt-4 max-w-full overflow-x-auto text-left p-4 bg-zinc-950/80 rounded-md border border-zinc-800">
+                <p className="text-xs text-yellow-500 mb-2 font-bold uppercase tracking-wider">Debug payload de Coolify v4 API:</p>
+                <pre className="text-[10px] text-zinc-400 font-mono break-all whitespace-pre-wrap">{initialDebug}</pre>
+              </div>
+            )}
           </div>
         ) : (
           <div className="rounded-md border border-border/50 overflow-hidden bg-background/50">

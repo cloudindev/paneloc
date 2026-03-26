@@ -265,9 +265,11 @@ export async function getApplicationDeployments(uuid: string) {
     const res = await coolifyFetch("GET", "/deployments?application_id=" + uuid).catch(() => null)
     let allDeployments = Array.isArray(res) ? res : (res?.data || [])
 
+    // Filtramos los de esta aplicación en concreto (Coolify usa application_id internamente como la UUID)
+    let res2: any = null
     if (allDeployments.length === 0) {
        // Buscar sin query y mapear en JS
-       const res2 = await coolifyFetch("GET", "/deployments").catch(() => null)
+       res2 = await coolifyFetch("GET", "/deployments").catch(() => null)
        const raw = Array.isArray(res2) ? res2 : (res2?.data || [])
        allDeployments = raw.filter((d: any) => 
          d.application_id === uuid || 
@@ -277,22 +279,22 @@ export async function getApplicationDeployments(uuid: string) {
     }
 
     if (allDeployments.length > 0) {
-      return { success: true, deployments: allDeployments }
+      return { success: true, deployments: allDeployments, debug: "Matched in global" }
     }
 
     // Última esperanza, el sub-recurso legacy
     const res3 = await coolifyFetch("GET", `/applications/${uuid}/deployments`).catch(() => null)
     if (res3) {
       const legacyDeps = Array.isArray(res3) ? res3 : (res3?.data || [])
-      if (legacyDeps.length > 0) return { success: true, deployments: legacyDeps }
+      if (legacyDeps.length > 0) return { success: true, deployments: legacyDeps, debug: "Matched in legacy" }
     }
 
     // Si todo falla y recibimos vacío, devolvemos success true pero array vacío.
-    // Esto es vital para que la UI no se vuelva loca o se congele en loading si realmente la app es nueva
-    return { success: true, deployments: [] }
+    // Pasamos el res de /deployments crudo en debug para leerlo en el frontend y diagnosticar
+    return { success: true, deployments: [], debug: JSON.stringify(res2).substring(0, 500) }
   } catch (error: any) {
     console.error("Error crítico obteniendo despliegues:", error)
-    return { success: true, error: error.message, deployments: [] } // Forzamos true con vacio para destrabar UI
+    return { success: true, error: error.message, deployments: [], debug: error.message } 
   }
 }
 
