@@ -28,6 +28,7 @@ async function coolifyFetch(method: string, endpoint: string, body?: any) {
       "Accept": "application/json"
     },
     body: body ? JSON.stringify(body) : undefined,
+    cache: "no-store", // <--- EVITA AGGRESSIVE CACHING DE NEXT 14
   })
 
   if (!res.ok) {
