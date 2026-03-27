@@ -162,6 +162,7 @@ export async function getResourceById(id: string) {
       name: resource.name,
       status: resource.status,
       createdAt: resource.createdAt,
+      projectId: resource.projectId,
       config: typeof resource.config === "string" ? JSON.parse(resource.config) : resource.config,
     }
   } catch (error) {
