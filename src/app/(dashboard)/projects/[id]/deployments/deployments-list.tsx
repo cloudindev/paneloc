@@ -20,8 +20,15 @@ export function DeploymentsList({ resource, initialDeployments, initialDebug }: 
 
     const interval = setInterval(async () => {
       const res = await getApplicationDeployments(config.coolify_uuid)
-      if (res.success) {
+      if (res.success && res.deployments && res.deployments.length > 0) {
         setDeployments(res.deployments)
+      } else if (res.success && res.deployments?.length === 0 && deployments.length > 0) {
+        // Prevent wiping the UI if Coolify API magically hides the deployment record upon completion
+        setDeployments(prev => prev.map(d => 
+          (d.status === 'in_progress' || d.status === 'queued') 
+            ? { ...d, status: 'unknown' } 
+            : d
+        ))
       }
     }, 3000)
 
@@ -92,15 +99,19 @@ export function DeploymentsList({ resource, initialDeployments, initialDebug }: 
         </Button>
       </CardHeader>
       <CardContent>
+        {initialDeployments && (
+          <div className="mb-4 p-4 bg-red-950/40 border border-red-900 rounded-md overflow-hidden text-left">
+            <p className="font-bold text-xs text-red-400 mb-2 uppercase">Server Component Initial Deployments Payload:</p>
+            <pre className="text-[10px] text-red-200 font-mono break-all whitespace-pre-wrap">
+              {JSON.stringify(initialDeployments, null, 2).substring(0, 1500)}
+            </pre>
+            <p className="font-bold text-xs text-red-400 mt-2 mb-1 uppercase">Debug String:</p>
+            <pre className="text-[10px] text-red-200 font-mono break-all whitespace-pre-wrap">{initialDebug || "Empty"}</pre>
+          </div>
+        )}
         {deployments.length === 0 ? (
           <div className="text-center py-12 border border-dashed rounded-lg bg-card/20 text-muted-foreground flex flex-col items-center">
             <p>No hay despliegues registrados para esta aplicación.</p>
-            {initialDebug && (
-              <div className="mt-4 max-w-full overflow-x-auto text-left p-4 bg-zinc-950/80 rounded-md border border-zinc-800">
-                <p className="text-xs text-yellow-500 mb-2 font-bold uppercase tracking-wider">Debug payload de Coolify v4 API:</p>
-                <pre className="text-[10px] text-zinc-400 font-mono break-all whitespace-pre-wrap">{initialDebug}</pre>
-              </div>
-            )}
           </div>
         ) : (
           <div className="rounded-md border border-border/50 overflow-hidden bg-background/50">
