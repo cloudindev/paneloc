@@ -261,37 +261,32 @@ export async function deleteAppFromCoolify(uuid: string) {
 
 export async function getApplicationDeployments(uuid: string) {
   try {
-    // Intentamos pedir los recursos globales y filtrarlos
-    const res = await coolifyFetch("GET", "/deployments?application_id=" + uuid).catch(() => null)
-    let allDeployments = Array.isArray(res) ? res : (res?.data || [])
-
-    // Filtramos los de esta aplicación en concreto (Coolify usa application_id internamente como la UUID)
-    let res2: any = null
-    if (allDeployments.length === 0) {
-       // Buscar sin query y mapear en JS
-       res2 = await coolifyFetch("GET", "/deployments").catch(() => null)
-       const raw = Array.isArray(res2) ? res2 : (res2?.data || [])
-       allDeployments = raw.filter((d: any) => 
-         d.application_id === uuid || 
-         d.application_uuid === uuid || 
-         d.uuid === uuid // Just in case it's a direct match somehow
-       )
+    // El endpoint oficial correcto según la documentación de Coolify v4 es /deployments/applications/{uuid}
+    const res = await coolifyFetch("GET", `/deployments/applications/${uuid}`).catch(() => null)
+    
+    if (res) {
+      const deployments = Array.isArray(res) ? res : (res?.data || [])
+      return { success: true, deployments, debug: "Matched official direct endpoint" }
     }
 
-    if (allDeployments.length > 0) {
-      return { success: true, deployments: allDeployments, debug: "Matched in global" }
-    }
+    // Fallback: Intentamos pedir los recursos globales y filtrarlos si fallara
+    const res2 = await coolifyFetch("GET", "/deployments").catch(() => null)
+    let allDeployments = Array.isArray(res2) ? res2 : (res2?.data || [])
 
-    // Última esperanza, el sub-recurso legacy
-    const res3 = await coolifyFetch("GET", `/applications/${uuid}/deployments`).catch(() => null)
-    if (res3) {
-      const legacyDeps = Array.isArray(res3) ? res3 : (res3?.data || [])
-      if (legacyDeps.length > 0) return { success: true, deployments: legacyDeps, debug: "Matched in legacy" }
+    // Filtramos los de esta aplicación en concreto recursivamente
+    const filtered = allDeployments.filter((d: any) => 
+      d.application_id === uuid || 
+      d.application_uuid === uuid || 
+      d.uuid === uuid
+    )
+
+    if (filtered.length > 0) {
+      return { success: true, deployments: filtered, debug: "Matched in global fallback" }
     }
 
     // Si todo falla y recibimos vacío, devolvemos success true pero array vacío.
-    // Pasamos el res de /deployments crudo en debug para leerlo en el frontend y diagnosticar
-    return { success: true, deployments: [], debug: JSON.stringify(res2).substring(0, 500) }
+    // Pasamos el res crudo en debug para leerlo en el frontend y diagnosticar si la request falló
+    return { success: true, deployments: [], debug: JSON.stringify(res || res2)?.substring(0, 500) }
   } catch (error: any) {
     console.error("Error crítico obteniendo despliegues:", error)
     return { success: true, error: error.message, deployments: [], debug: error.message } 
