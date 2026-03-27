@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { getResourceById } from "@/app/actions/projects"
+import { getResourceById, getProjectDatabases } from "@/app/actions/projects"
 import { DatabasesView } from "./databases-view"
 
 export default async function ProjectDatabasesPage({ params }: { params: Promise<{ id: string }> }) {
@@ -10,8 +10,8 @@ export default async function ProjectDatabasesPage({ params }: { params: Promise
     redirect("/projects")
   }
 
-  // Provisional: Fetchearemos las BD de Coolify o de la DB local en un futuro
-  const databases: any[] = []
+  // Fetch persisted databases from DB
+  const databases = await getProjectDatabases(project.id)
 
   return (
     <div className="p-6">

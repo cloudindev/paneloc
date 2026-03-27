@@ -51,6 +51,8 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
   
   const [isDeploying, setIsDeploying] = React.useState(false)
 
+  const [showCatalog, setShowCatalog] = React.useState(initialDatabases.length === 0)
+
   const handleEngineClick = (engine: any) => {
     if (!engine.enabled) return
     setSelectedEngine(engine)
@@ -61,6 +63,7 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
     setIsDeploying(true)
     setStep(3)
     
+    // Convert isPublic to public_port config behavior if necessary
     const res = await createCoolifyDatabase(resource.id, {
       engine: selectedEngine.id,
       name: dbName,
@@ -83,23 +86,72 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
   const reset = () => {
     setStep(0)
     setSelectedEngine(null)
+    setShowCatalog(false)
+    router.refresh()
   }
 
   if (step === 0) {
-    return (
-      <div className="space-y-8">
-        {initialDatabases.length > 0 ? (
-          <div>
-            {/* Si ya tienen BDs instaladas, aquí pondremos la tabla */}
+    if (!showCatalog && initialDatabases.length > 0) {
+      return (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold text-foreground/90 flex items-center gap-2">
+              <Database className="w-5 h-5 text-primary" /> Mis Bases de Datos
+            </h2>
+            <Button onClick={() => setShowCatalog(true)} className="gap-2">
+              <Database className="w-4 h-4" /> Añadir Base de Datos
+            </Button>
           </div>
-        ) : null}
+          <div className="grid grid-cols-1 gap-4">
+            {initialDatabases.map((db: any) => (
+              <Card key={db.id} className="border-border/50 bg-card/40 backdrop-blur-sm">
+                <CardHeader className="py-4">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded text-blue-400 bg-blue-500/10 flex items-center justify-center">
+                        <Database className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg">{db.name}</CardTitle>
+                        <CardDescription>{db.config?.engine === "postgresql" ? "PostgreSQL Database" : "Database"}</CardDescription>
+                      </div>
+                    </div>
+                    <span className="text-xs bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded-full font-medium flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      {db.status === "running" ? "Running" : db.status}
+                    </span>
+                  </div>
+                </CardHeader>
+                <CardContent className="py-4 border-t border-border/20 bg-muted/5">
+                  <div className="space-y-1">
+                    <span className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Internal URL</span>
+                    <code className="block w-full overflow-x-auto text-xs bg-black/40 px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-primary/50 text-emerald-400/90 font-mono">
+                      {db.config?.connection_uri || "N/A"}
+                    </code>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )
+    }
 
+    return (
+      <div className="space-y-6 animate-in fade-in duration-500">
+        {initialDatabases.length > 0 && (
+          <Button variant="ghost" onClick={() => setShowCatalog(false)} className="mb-2 pl-0 text-muted-foreground group">
+            <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+            Volver a mis bases de datos
+          </Button>
+        )}
+        
         <div>
-          <h2 className="text-xl font-semibold mb-4 text-foreground/90 flex items-center gap-2">
+          <h2 className="text-xl font-semibold mb-6 text-foreground/90 flex items-center gap-2">
             <span className="flex items-center justify-center w-8 h-8 rounded bg-primary/10 text-primary shrink-0">
               <Database className="w-4 h-4" />
             </span>
-            Añadir Base de Datos
+            Catálogo de Bases de Datos
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {ENGINES.map((engine) => {

@@ -170,6 +170,35 @@ export async function getResourceById(id: string) {
   }
 }
 
+export async function getProjectDatabases(projectId: string) {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get("olacloud_session")?.value
+    if (!token) return []
+
+    const session = await verifyJWT(token)
+    if (!session || !session.sub) return []
+
+    const resources = await prisma.resource.findMany({
+      where: { 
+        projectId,
+        type: "POSTGRES_DB"
+      },
+      orderBy: { createdAt: "desc" }
+    })
+    
+    // Config parsing
+    return resources.map((r: any) => ({
+      ...r,
+      config: typeof r.config === "string" ? JSON.parse(r.config) : r.config
+    }))
+
+  } catch (error) {
+    console.error("Error obteniendo BDs:", error)
+    return []
+  }
+}
+
 import { deleteAppFromCoolify } from "./coolify"
 import { revalidatePath } from "next/cache"
 

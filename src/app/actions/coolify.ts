@@ -363,11 +363,33 @@ export async function createCoolifyDatabase(projectId: string, payload: any) {
       throw new Error("Coolify no devolvió el UUID de la base de datos creada.")
     }
 
+    // El host interno de la base de datos es su UUID devuelto por Coolify
+    const internalHost = dbCreated.uuid
+    const connectionUri = `postgres://${payload.user}:${payload.password}@${internalHost}:5432/${payload.name}`
+
+    // 4. Registrar en nuestra base de datos (Prisma)
+    const resource = await prisma.resource.create({
+      data: {
+        name: payload.name,
+        type: "POSTGRES_DB",
+        status: "running",
+        projectId: projectId,
+        config: {
+          coolify_uuid: dbCreated.uuid,
+          engine: "postgresql",
+          db_user: payload.user,
+          db_name: payload.name,
+          connection_uri: connectionUri,
+          is_public: !!payload.isPublic,
+          coolify_server: COOLIFY_SERVER_UUID
+        }
+      }
+    })
+
     return { 
       success: true, 
       coolifyUuid: dbCreated.uuid,
-      // Devuelve connection string (Optimistic, as Coolify handles internal proxy)
-      connectionString: `postgres://${payload.user}:${payload.password}@${payload.name}:5432/${payload.name}`
+      connectionString: connectionUri
     }
   } catch(error: any) {
     console.error("Error aprovisionando base de datos:", error)
