@@ -261,32 +261,29 @@ export async function deleteAppFromCoolify(uuid: string) {
 
 export async function getApplicationDeployments(uuid: string) {
   try {
-    // El endpoint oficial correcto según la documentación de Coolify v4 es /deployments/applications/{uuid}
+    // Intento 1: Endpoints de deployments directos e indirectos
     const res = await coolifyFetch("GET", `/deployments/applications/${uuid}`).catch(() => null)
+    if (res && Array.isArray(res) && res.length > 0) {
+      return { success: true, deployments: res, debug: "Matched official direct endpoint" }
+    }
+    if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
+      return { success: true, deployments: res.data, debug: "Matched official direct endpoint (paginated)" }
+    }
+
+    // Intento 2: Buscar en la raíz de la aplicación (/applications/{uuid})
+    const appInfo = await coolifyFetch("GET", `/applications/${uuid}`).catch((e) => e.message)
     
-    if (res) {
-      const deployments = Array.isArray(res) ? res : (res?.data || [])
-      return { success: true, deployments, debug: "Matched official direct endpoint" }
+    // Si la info de la app tiene un array de deployments internamente (Laravel eager loading)
+    if (appInfo && typeof appInfo === 'object' && Array.isArray(appInfo.deployments)) {
+       return { success: true, deployments: appInfo.deployments, debug: "Found deployments embedded in /applications/{uuid}" }
     }
 
-    // Fallback: Intentamos pedir los recursos globales y filtrarlos si fallara
-    const res2 = await coolifyFetch("GET", "/deployments").catch(() => null)
-    let allDeployments = Array.isArray(res2) ? res2 : (res2?.data || [])
-
-    // Filtramos los de esta aplicación en concreto recursivamente
-    const filtered = allDeployments.filter((d: any) => 
-      d.application_id === uuid || 
-      d.application_uuid === uuid || 
-      d.uuid === uuid
-    )
-
-    if (filtered.length > 0) {
-      return { success: true, deployments: filtered, debug: "Matched in global fallback" }
+    // Si fallan todas las estrategias lógicas, enviamos un volcado de diagnóstico masivo del objeto Application para examinar
+    return { 
+      success: true, 
+      deployments: [], 
+      debug: "DUMP /applications/{uuid}: " + JSON.stringify(appInfo)?.substring(0, 1500) 
     }
-
-    // Si todo falla y recibimos vacío, devolvemos success true pero array vacío.
-    // Pasamos el res crudo en debug para leerlo en el frontend y diagnosticar si la request falló
-    return { success: true, deployments: [], debug: JSON.stringify(res || res2)?.substring(0, 500) }
   } catch (error: any) {
     console.error("Error crítico obteniendo despliegues:", error)
     return { success: true, error: error.message, deployments: [], debug: error.message } 
