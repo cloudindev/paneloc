@@ -365,8 +365,8 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
 
            {step === 2 && (
              <CardFooter className="bg-muted/10 p-4 border-t border-border/20 flex justify-end">
-               <Button onClick={handleDeploy} className="gap-2 px-6">
-                 Iniciar Despliegue <ChevronRight className="w-4 h-4" />
+               <Button onClick={handleDeploy} disabled={isDeploying} className="gap-2 px-6">
+                 {isDeploying ? <Loader2 className="w-4 h-4 animate-spin" /> : "Iniciar Despliegue"} {isDeploying ? "" : <ChevronRight className="w-4 h-4" />}
                </Button>
              </CardFooter>
            )}
