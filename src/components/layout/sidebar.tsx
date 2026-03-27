@@ -40,7 +40,7 @@ export function Sidebar({ projects = [] }: { projects?: any[] }) {
   ]
 
   const projectDatabaseNav = [
-    { name: 'Bases de datos', href: `/projects/${currentProjectId}/database`, icon: Database },
+    { name: 'Bases de datos', href: `/projects/${currentProjectId}/databases`, icon: Database },
   ]
 
   const projectStorageNav = [
