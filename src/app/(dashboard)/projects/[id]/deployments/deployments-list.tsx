@@ -99,16 +99,7 @@ export function DeploymentsList({ resource, initialDeployments, initialDebug }: 
         </Button>
       </CardHeader>
       <CardContent>
-        {initialDeployments && (
-          <div className="mb-4 p-4 bg-red-950/40 border border-red-900 rounded-md overflow-hidden text-left">
-            <p className="font-bold text-xs text-red-400 mb-2 uppercase">Server Component Initial Deployments Payload:</p>
-            <pre className="text-[10px] text-red-200 font-mono break-all whitespace-pre-wrap">
-              {JSON.stringify(initialDeployments, null, 2).substring(0, 1500)}
-            </pre>
-            <p className="font-bold text-xs text-red-400 mt-2 mb-1 uppercase">Debug String:</p>
-            <pre className="text-[10px] text-red-200 font-mono break-all whitespace-pre-wrap">{initialDebug || "Empty"}</pre>
-          </div>
-        )}
+
         {deployments.length === 0 ? (
           <div className="text-center py-12 border border-dashed rounded-lg bg-card/20 text-muted-foreground flex flex-col items-center">
             <p>No hay despliegues registrados para esta aplicación.</p>

@@ -261,42 +261,23 @@ export async function deleteAppFromCoolify(uuid: string) {
 
 export async function getApplicationDeployments(uuid: string) {
   try {
-    // Intento 1: Endpoints de deployments directos e indirectos
-    const res = await coolifyFetch("GET", `/deployments/applications/${uuid}`).catch(() => null)
-    if (res && Array.isArray(res) && res.length > 0) {
-      return { success: true, deployments: res, debug: "Matched official direct endpoint" }
-    }
-    if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
-      return { success: true, deployments: res.data, debug: "Matched official direct endpoint (paginated)" }
+    // El endpoint oficial correcto según la documentación de Coolify v4 es /deployments/applications/{uuid}
+    // Retorna { count: number, deployments: ApplicationDeploymentQueue[] }
+    const res = await coolifyFetch("GET", `/deployments/applications/${uuid}?take=20`).catch(() => null)
+    
+    if (res && res.deployments && Array.isArray(res.deployments)) {
+      return { success: true, deployments: res.deployments }
     }
 
-    // Intento 2: Buscar en la raíz de la aplicación (/applications/{uuid})
-    const appInfo = await coolifyFetch("GET", `/applications/${uuid}`).catch((e) => e.message)
-    
-    // Si la info de la app tiene un array de deployments internamente (Laravel eager loading)
-    if (appInfo && typeof appInfo === 'object' && Array.isArray(appInfo.deployments)) {
-       return { success: true, deployments: appInfo.deployments, debug: "Found deployments embedded in /applications/{uuid}" }
+    if (res && Array.isArray(res)) {
+      return { success: true, deployments: res }
     }
 
-    // Vamos a examinar qué cara tiene un deployment global para ver cómo enlazarlo
-    const resGlobal = await coolifyFetch("GET", "/deployments").catch(() => null)
-    const rawDeployments = Array.isArray(resGlobal) ? resGlobal : (resGlobal?.data || [])
-    
-    // Filtramos buscando nuestro uuid EN CUALQUIER PARTE del objeto stringificado solo para ver si existe
-    const potentialMatches = rawDeployments.filter((d: any) => JSON.stringify(d).includes(uuid))
-    
-    // Si no hay ninguno, pasamos el primer deployment del sistema para ver su estructura
-    const sampleObject = potentialMatches.length > 0 ? potentialMatches[0] : (rawDeployments[0] || "NO DEPLOYMENTS AT ALL")
-
-    // Si fallan todas las estrategias lógicas, enviamos un volcado de diagnóstico masivo del objeto Application para examinar
-    return { 
-      success: true, 
-      deployments: potentialMatches, 
-      debug: "GLOBAL DUMP SAMPLE: " + JSON.stringify(sampleObject)?.substring(0, 1500) 
-    }
+    // Fallback pasivo si todo falla para que la UI no rompa
+    return { success: true, deployments: [] }
   } catch (error: any) {
     console.error("Error crítico obteniendo despliegues:", error)
-    return { success: true, error: error.message, deployments: [], debug: error.message } 
+    return { success: true, error: error.message, deployments: [] } 
   }
 }
 
