@@ -2,8 +2,9 @@ import { redirect } from "next/navigation"
 import { getResourceById } from "@/app/actions/projects"
 import { DatabasesView } from "./databases-view"
 
-export default async function ProjectDatabasesPage({ params }: { params: { id: string } }) {
-  const project = await getResourceById(params.id)
+export default async function ProjectDatabasesPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const project = await getResourceById(id)
   
   if (!project) {
     redirect("/projects")
