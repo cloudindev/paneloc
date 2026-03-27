@@ -278,11 +278,21 @@ export async function getApplicationDeployments(uuid: string) {
        return { success: true, deployments: appInfo.deployments, debug: "Found deployments embedded in /applications/{uuid}" }
     }
 
+    // Vamos a examinar qué cara tiene un deployment global para ver cómo enlazarlo
+    const resGlobal = await coolifyFetch("GET", "/deployments").catch(() => null)
+    const rawDeployments = Array.isArray(resGlobal) ? resGlobal : (resGlobal?.data || [])
+    
+    // Filtramos buscando nuestro uuid EN CUALQUIER PARTE del objeto stringificado solo para ver si existe
+    const potentialMatches = rawDeployments.filter((d: any) => JSON.stringify(d).includes(uuid))
+    
+    // Si no hay ninguno, pasamos el primer deployment del sistema para ver su estructura
+    const sampleObject = potentialMatches.length > 0 ? potentialMatches[0] : (rawDeployments[0] || "NO DEPLOYMENTS AT ALL")
+
     // Si fallan todas las estrategias lógicas, enviamos un volcado de diagnóstico masivo del objeto Application para examinar
     return { 
       success: true, 
-      deployments: [], 
-      debug: "DUMP /applications/{uuid}: " + JSON.stringify(appInfo)?.substring(0, 1500) 
+      deployments: potentialMatches, 
+      debug: "GLOBAL DUMP SAMPLE: " + JSON.stringify(sampleObject)?.substring(0, 1500) 
     }
   } catch (error: any) {
     console.error("Error crítico obteniendo despliegues:", error)
