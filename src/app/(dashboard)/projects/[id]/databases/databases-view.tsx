@@ -79,7 +79,7 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
     setStep(3)
     
     // Convert isPublic to public_port config behavior if necessary
-    const res = await createCoolifyDatabase(resource.id, {
+    const res = await createCoolifyDatabase(resource.projectId, {
       engine: selectedEngine.id,
       name: dbName,
       user: dbUser,
