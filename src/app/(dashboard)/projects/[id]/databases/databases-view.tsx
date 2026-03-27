@@ -4,9 +4,96 @@ import * as React from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Database, Server, ChevronRight, CheckCircle2, Loader2, ArrowLeft, DownloadCloud, Shield, Lock, Eye, EyeOff, Trash2 } from "lucide-react"
-import { createCoolifyDatabase, deleteDatabaseFromCoolify } from "@/app/actions/coolify"
+import { Database, Server, ChevronRight, CheckCircle2, Loader2, ArrowLeft, DownloadCloud, Shield, Lock, Eye, EyeOff, Trash2, TerminalSquare, Play } from "lucide-react"
+import { createCoolifyDatabase, deleteDatabaseFromCoolify, executeDatabaseQuery } from "@/app/actions/coolify"
 import { useRouter } from "next/navigation"
+
+function SqlConsole({ dbId }: { dbId: string }) {
+  const [query, setQuery] = React.useState("")
+  const [isRunning, setIsRunning] = React.useState(false)
+  const [result, setResult] = React.useState<{ success: boolean; rows?: any[]; fields?: string[]; error?: string; command?: string; rowCount?: number } | null>(null)
+
+  const handleRun = async () => {
+    if (!query.trim()) return
+    setIsRunning(true)
+    setResult(null)
+    const res = await executeDatabaseQuery(dbId, query)
+    setResult(res as any)
+    setIsRunning(false)
+  }
+
+  return (
+    <div className="mt-4 pt-4 border-t border-border/20 space-y-4">
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <textarea
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="SELECT * FROM pg_catalog.pg_tables;"
+            className="w-full min-h-[100px] bg-black/40 text-emerald-400 font-mono text-xs p-3 rounded-md focus:outline-none focus:ring-1 focus:ring-primary/50 resize-y border border-border/20"
+            spellCheck={false}
+          />
+        </div>
+        <Button 
+          onClick={handleRun} 
+          disabled={isRunning || !query.trim()}
+          className="h-auto shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white"
+        >
+          {isRunning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
+          Run
+        </Button>
+      </div>
+
+      {result && (
+        <div className="bg-black/20 rounded border border-border/20 overflow-hidden">
+          {result.error ? (
+            <div className="p-3 text-xs text-red-400 font-mono bg-red-500/10">
+              Error: {result.error}
+            </div>
+          ) : (
+            <div>
+              <div className="px-3 py-2 bg-muted/30 border-b border-border/20 flex justify-between items-center">
+                <span className="text-xs text-muted-foreground font-mono">
+                  {result.command} OK ({result.rowCount} rows)
+                </span>
+              </div>
+              {result.rows && result.rows.length > 0 ? (
+                <div className="max-h-[300px] overflow-auto">
+                  <table className="w-full text-xs text-left whitespace-nowrap">
+                    <thead className="sticky top-0 bg-muted/80 backdrop-blur-sm shadow-sm">
+                      <tr>
+                        {result.fields?.map((f, i) => (
+                          <th key={i} className="px-3 py-2 text-muted-foreground font-medium border-b border-border/20">
+                            {f}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/10">
+                      {result.rows.map((row, i) => (
+                        <tr key={i} className="hover:bg-muted/20 transition-colors">
+                          {result.fields?.map((f, colIdx) => (
+                            <td key={colIdx} className="px-3 py-2 font-mono text-emerald-300/80">
+                              {row[f] === null ? <span className="text-muted-foreground/50 italic">null</span> : String(row[f])}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="p-4 text-center text-xs text-muted-foreground">
+                  No rows returned
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
 
 const ENGINES = [
   {
@@ -51,6 +138,7 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
   
   const [isDeploying, setIsDeploying] = React.useState(false)
   const [isDeleting, setIsDeleting] = React.useState<string | null>(null)
+  const [activeConsole, setActiveConsole] = React.useState<string | null>(null)
 
   const [showCatalog, setShowCatalog] = React.useState(initialDatabases.length === 0)
 
@@ -120,7 +208,16 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
           <div className="grid grid-cols-1 gap-4">
             {initialDatabases.map((db: any) => (
               <Card key={db.id} className="border-border/50 bg-card/40 backdrop-blur-sm relative group">
-                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-primary hover:bg-primary/10"
+                    onClick={() => setActiveConsole(activeConsole === db.id ? null : db.id)}
+                    title="SQL Console"
+                  >
+                    <TerminalSquare className="w-4 h-4" />
+                  </Button>
                   <Button 
                     variant="ghost" 
                     size="icon" 
@@ -132,7 +229,7 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
                   </Button>
                 </div>
                 <CardHeader className="py-4">
-                  <div className="flex justify-between items-center pr-10">
+                  <div className="flex justify-between items-center pr-20">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded text-blue-400 bg-blue-500/10 flex items-center justify-center">
                         <Database className="w-5 h-5" />
@@ -155,6 +252,7 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
                       {db.config?.connection_uri || "N/A"}
                     </code>
                   </div>
+                  {activeConsole === db.id && <SqlConsole dbId={db.id} />}
                 </CardContent>
               </Card>
             ))}

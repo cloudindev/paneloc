@@ -3,6 +3,7 @@
 import { cookies } from "next/headers"
 import { verifyJWT } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { Client } from "pg"
 
 async function coolifyFetch(method: string, endpoint: string, body?: any) {
   let apiUrl = process.env.COOLIFY_API_URL?.trim() || "http://127.0.0.1:8000/api/v1"
@@ -284,6 +285,56 @@ export async function deleteDatabaseFromCoolify(resourceId: string, coolifyUuid:
     return { success: true }
   } catch (error: any) {
     console.error("Error eliminando base de datos en Coolify:", error)
+    return { success: false, error: error.message }
+  }
+}
+
+export async function executeDatabaseQuery(resourceId: string, query: string) {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get("olacloud_session")?.value
+    if (!token) throw new Error("No estás autenticado")
+
+    const session = await verifyJWT(token)
+    if (!session || !session.sub) throw new Error("Sesión inválida")
+
+    // Fetch the database credentials from Prisma
+    const resource = await prisma.resource.findUnique({
+      where: { id: resourceId }
+    })
+
+    if (!resource || resource.type !== "POSTGRES_DB") {
+      throw new Error("Base de datos no encontrada o tipo inválido.")
+    }
+
+    const config = typeof resource.config === "string" ? JSON.parse(resource.config) : resource.config
+    const connectionUri = config.connection_uri
+
+    if (!connectionUri) {
+      throw new Error("Credenciales de conexión no disponibles.")
+    }
+
+    // Connect and execute the query safely
+    const client = new Client({
+      connectionString: connectionUri,
+      // Defaulting to 3 seconds timeout to prevent freezing on inaccessible containers
+      connectionTimeoutMillis: 3000, 
+      query_timeout: 10000 
+    })
+
+    await client.connect()
+    const res = await client.query(query)
+    await client.end()
+
+    return { 
+      success: true, 
+      rowCount: res.rowCount, 
+      rows: res.rows, 
+      command: res.command,
+      fields: res.fields?.map(f => f.name) || []
+    }
+  } catch (error: any) {
+    console.error("Error ejecutando SQL:", error)
     return { success: false, error: error.message }
   }
 }
