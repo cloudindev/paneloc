@@ -311,3 +311,66 @@ export async function getDeploymentTaskLogs(deploymentUuid: string) {
     return { success: false, error: error.message, logs: "", status: "unknown" }
   }
 }
+
+export async function createCoolifyDatabase(projectId: string, payload: any) {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get("olacloud_session")?.value
+    if (!token) throw new Error("No estás autenticado")
+
+    const session = await verifyJWT(token)
+    if (!session || !session.sub) throw new Error("Sesión inválida")
+
+    const COOLIFY_SERVER_UUID = process.env.COOLIFY_SERVER_UUID?.trim()
+    if (!COOLIFY_SERVER_UUID) throw new Error("COOLIFY_SERVER_UUID no configurado en backend")
+
+    // 1. Get Default Project for the DB
+    let targetProjectUuid = ""
+    try {
+      const projectsRes = await coolifyFetch("GET", "/projects")
+      const projects = Array.isArray(projectsRes) ? projectsRes : (projectsRes?.data || [])
+      
+      if (projects.length > 0) {
+        targetProjectUuid = projects[0].uuid
+      } else {
+        throw new Error("No se encontró ningún proyecto base en Coolify")
+      }
+    } catch (e: any) {
+      throw new Error(`Fallo descubriendo servidor: ${e.message}`)
+    }
+
+    // 2. Format PostgreSQL payload
+    if (payload.engine !== "postgresql") {
+      throw new Error("Motor no soportado actualmente.")
+    }
+
+    const postPayload = {
+      server_uuid: COOLIFY_SERVER_UUID,
+      project_uuid: targetProjectUuid,
+      environment_name: "production",
+      name: payload.name,
+      postgres_user: payload.user,
+      postgres_password: payload.password,
+      postgres_db: payload.name, // El nombre interno de base de datos será igual al nombre de recurso
+      is_public: !!payload.isPublic,
+      instant_deploy: true
+    }
+
+    // 3. POST to Coolify
+    const dbCreated = await coolifyFetch("POST", "/databases/postgresql", postPayload)
+    
+    if (!dbCreated || !dbCreated.uuid) {
+      throw new Error("Coolify no devolvió el UUID de la base de datos creada.")
+    }
+
+    return { 
+      success: true, 
+      coolifyUuid: dbCreated.uuid,
+      // Devuelve connection string (Optimistic, as Coolify handles internal proxy)
+      connectionString: `postgres://${payload.user}:${payload.password}@${payload.name}:5432/${payload.name}`
+    }
+  } catch(error: any) {
+    console.error("Error aprovisionando base de datos:", error)
+    return { success: false, error: error.message }
+  }
+}

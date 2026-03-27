@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Database, Server, ChevronRight, CheckCircle2, Loader2, ArrowLeft, DownloadCloud, Shield, Lock, Eye, EyeOff } from "lucide-react"
-import { handleCreateDatabase } from "@/app/actions/databases"
+import { createCoolifyDatabase } from "@/app/actions/coolify"
 import { useRouter } from "next/navigation"
 
 const ENGINES = [
@@ -47,6 +47,7 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
   const [dbPassword, setDbPassword] = React.useState(() => Math.random().toString(36).slice(-12) + "A1!")
   const [showPassword, setShowPassword] = React.useState(false)
   const [isPublic, setIsPublic] = React.useState(false)
+  const [connectionString, setConnectionString] = React.useState("")
   
   const [isDeploying, setIsDeploying] = React.useState(false)
 
@@ -59,17 +60,24 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
   const handleDeploy = async () => {
     setIsDeploying(true)
     setStep(3)
-    // Simulate API delay for aesthetic purposes payload would use VM101 coolify_server_uuid
-    await new Promise(r => setTimeout(r, 2000))
-    const res = await handleCreateDatabase(resource.id, {
+    
+    const res = await createCoolifyDatabase(resource.id, {
       engine: selectedEngine.id,
       name: dbName,
       user: dbUser,
       password: dbPassword,
       isPublic
     })
+    
+    if (res.success && res.connectionString) {
+      setConnectionString(res.connectionString)
+      setStep(4)
+    } else {
+      alert("Error instalando DB: " + res.error)
+      setStep(2) // volver al form
+    }
+    
     setIsDeploying(false)
-    setStep(4)
   }
 
   const reset = () => {
@@ -308,7 +316,7 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
              <div className="flex justify-between items-center py-2 border-b border-border/20">
                <span className="text-sm text-muted-foreground">Internal URL (Nixpacks)</span>
                <code className="text-xs bg-black/40 px-2 py-1 rounded border border-border/30 font-mono text-primary/80">
-                 postgres://{dbUser}:********@{dbName}:5432/{dbName}
+                 {connectionString}
                </code>
              </div>
           </CardContent>
