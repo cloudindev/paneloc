@@ -259,6 +259,35 @@ export async function deleteAppFromCoolify(uuid: string) {
   }
 }
 
+export async function deleteDatabaseFromCoolify(resourceId: string, coolifyUuid: string) {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get("olacloud_session")?.value
+    if (!token) throw new Error("No estás autenticado")
+
+    const session = await verifyJWT(token)
+    if (!session || !session.sub) throw new Error("Sesión inválida")
+
+    const query = new URLSearchParams({
+      force: 'true',
+      delete_configurations: 'true',
+      delete_volumes: 'true',
+      docker_cleanup: 'true'
+    }).toString()
+
+    await coolifyFetch("DELETE", `/databases/${coolifyUuid}?${query}`)
+
+    await prisma.resource.delete({
+      where: { id: resourceId }
+    })
+    
+    return { success: true }
+  } catch (error: any) {
+    console.error("Error eliminando base de datos en Coolify:", error)
+    return { success: false, error: error.message }
+  }
+}
+
 export async function getApplicationDeployments(uuid: string) {
   try {
     // El endpoint oficial correcto según la documentación de Coolify v4 es /deployments/applications/{uuid}

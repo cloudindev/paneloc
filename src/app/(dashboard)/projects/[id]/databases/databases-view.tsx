@@ -4,8 +4,8 @@ import * as React from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Database, Server, ChevronRight, CheckCircle2, Loader2, ArrowLeft, DownloadCloud, Shield, Lock, Eye, EyeOff } from "lucide-react"
-import { createCoolifyDatabase } from "@/app/actions/coolify"
+import { Database, Server, ChevronRight, CheckCircle2, Loader2, ArrowLeft, DownloadCloud, Shield, Lock, Eye, EyeOff, Trash2 } from "lucide-react"
+import { createCoolifyDatabase, deleteDatabaseFromCoolify } from "@/app/actions/coolify"
 import { useRouter } from "next/navigation"
 
 const ENGINES = [
@@ -50,6 +50,7 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
   const [connectionString, setConnectionString] = React.useState("")
   
   const [isDeploying, setIsDeploying] = React.useState(false)
+  const [isDeleting, setIsDeleting] = React.useState<string | null>(null)
 
   const [showCatalog, setShowCatalog] = React.useState(initialDatabases.length === 0)
 
@@ -57,6 +58,20 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
     if (!engine.enabled) return
     setSelectedEngine(engine)
     setStep(1)
+  }
+
+  const handleDeleteDb = async (dbId: string, coolifyUuid: string) => {
+    if (!confirm("¿Estás seguro de que deseas eliminar permanentemente esta base de datos y todos sus volúmenes de almacenamiento? Esta acción es irreversible.")) return
+    
+    setIsDeleting(dbId)
+    const res = await deleteDatabaseFromCoolify(dbId, coolifyUuid)
+    setIsDeleting(null)
+    
+    if (res.success) {
+      router.refresh()
+    } else {
+      alert("Error eliminando base de datos: " + res.error)
+    }
   }
 
   const handleDeploy = async () => {
@@ -104,15 +119,26 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
           </div>
           <div className="grid grid-cols-1 gap-4">
             {initialDatabases.map((db: any) => (
-              <Card key={db.id} className="border-border/50 bg-card/40 backdrop-blur-sm">
+              <Card key={db.id} className="border-border/50 bg-card/40 backdrop-blur-sm relative group">
+                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                    onClick={() => handleDeleteDb(db.id, db.config?.coolify_uuid)}
+                    disabled={isDeleting === db.id}
+                  >
+                    {isDeleting === db.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                  </Button>
+                </div>
                 <CardHeader className="py-4">
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center pr-10">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded text-blue-400 bg-blue-500/10 flex items-center justify-center">
                         <Database className="w-5 h-5" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg">{db.name}</CardTitle>
+                        <CardTitle className="text-lg disabled:opacity-50">{db.name}</CardTitle>
                         <CardDescription>{db.config?.engine === "postgresql" ? "PostgreSQL Database" : "Database"}</CardDescription>
                       </div>
                     </div>
