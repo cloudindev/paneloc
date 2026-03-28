@@ -5,7 +5,7 @@ import { verifyJWT } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { Client } from "pg"
 
-async function coolifyFetch(method: string, endpoint: string, body?: any) {
+export async function coolifyFetch(method: string, endpoint: string, body?: any) {
   let apiUrl = process.env.COOLIFY_API_URL?.trim() || "http://127.0.0.1:8000/api/v1"
   if (apiUrl.endsWith("/")) apiUrl = apiUrl.slice(0, -1)
   if (!apiUrl.endsWith("/api/v1")) apiUrl += "/api/v1"

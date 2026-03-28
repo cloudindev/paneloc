@@ -74,3 +74,61 @@ export async function getAllDomains() {
     return []
   }
 }
+
+export async function addDomainToResource(resourceId: string, newDomain: string) {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get("olacloud_session")?.value
+    if (!token) throw new Error("No estás autenticado")
+
+    const session = await verifyJWT(token)
+    if (!session || !session.sub) throw new Error("Sesión inválida")
+
+    const resource = await prisma.resource.findUnique({
+      where: { id: resourceId },
+      include: { project: { include: { organization: { include: { members: { where: { userId: session.sub } } } } } } }
+    })
+
+    if (!resource || resource.project.organization.members.length === 0) {
+      throw new Error("Recurso no encontrado o sin acceso")
+    }
+
+    const config = typeof resource.config === "string" ? JSON.parse(resource.config) : resource.config
+    if (!config.coolify_uuid) {
+      throw new Error("El recurso no tiene un UUID válido de Coolify")
+    }
+
+    // Preparar el string de dominios de forma segura
+    let currentFqdnStr = config.custom_fqdn || ""
+    const cleanDomain = newDomain.trim().toLowerCase().replace(/^https?:\/\//, "")
+    // Coolify expects full URLs natively usually, but will accept custom naked domains. Better to enforce standard:
+    const newFqdnUrl = `https://${cleanDomain}` 
+
+    // Revisar duplicado
+    if (currentFqdnStr.includes(cleanDomain)) {
+      throw new Error("Este dominio ya está asignado al proyecto")
+    }
+
+    const updatedFqdnStr = currentFqdnStr ? `${currentFqdnStr},${newFqdnUrl}` : newFqdnUrl
+
+    // Fetch the dynamic helper
+    const { coolifyFetch } = await import("@/app/actions/coolify")
+    
+    // Impactamos a Coolify
+    await coolifyFetch("PATCH", `/applications/${config.coolify_uuid}`, { fqdn: updatedFqdnStr })
+
+    // Si Coolify responde ok (no lanza Excepción), sincronizamos nuestra DB local:
+    const updatedConfig = { ...config, custom_fqdn: updatedFqdnStr }
+    
+    await prisma.resource.update({
+      where: { id: resourceId },
+      data: { config: updatedConfig }
+    })
+
+    return { success: true }
+
+  } catch (error: any) {
+    console.error("Add domain error:", error.message)
+    return { success: false, error: error.message }
+  }
+}

@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Globe, Plus, ShieldCheck, ShieldAlert, Check, Loader2 } from "lucide-react"
+import { Globe, Plus, ShieldCheck, ShieldAlert, Check, Loader2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -13,21 +13,56 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { getAllDomains } from "@/app/actions/domains"
+import { getAllDomains, addDomainToResource } from "@/app/actions/domains"
+import { getProjectsFromDB } from "@/app/actions/projects"
 
 export default function DomainsPage() {
   const [domains, setDomains] = React.useState<any[]>([])
+  const [projects, setProjects] = React.useState<any[]>([])
   const [loading, setLoading] = React.useState(true)
   const [search, setSearch] = React.useState("")
+  
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = React.useState(false)
+  const [formDomain, setFormDomain] = React.useState("")
+  const [formProjectId, setFormProjectId] = React.useState("")
+  const [formSaving, setFormSaving] = React.useState(false)
+
+  const fetchAll = async () => {
+    setLoading(true)
+    const [liveDomains, liveProjects] = await Promise.all([
+      getAllDomains(),
+      getProjectsFromDB()
+    ])
+    setDomains(liveDomains)
+    setProjects(liveProjects.filter(p => p.status !== "error"))
+    setLoading(false)
+  }
 
   React.useEffect(() => {
-    async function fetchDomains() {
-      const liveDomains = await getAllDomains()
-      setDomains(liveDomains)
-      setLoading(false)
-    }
-    fetchDomains()
+    fetchAll()
   }, [])
+
+  const handleOpenModal = () => {
+    setFormDomain("")
+    setFormProjectId("")
+    setIsModalOpen(true)
+  }
+
+  const handleSaveDomain = async () => {
+    if (!formDomain.trim() || !formProjectId || formSaving) return
+    setFormSaving(true)
+    
+    const res = await addDomainToResource(formProjectId, formDomain)
+    
+    if (res.success) {
+      setIsModalOpen(false)
+      await fetchAll()
+    } else {
+      alert("Error enlazando dominio: " + res.error)
+    }
+    setFormSaving(false)
+  }
 
   const filteredDomains = domains.filter((d: any) => 
     d.name.toLowerCase().includes(search.toLowerCase()) || 
@@ -43,7 +78,7 @@ export default function DomainsPage() {
             Mapeo de dominios personalizados y certificados SSL automáticos.
           </p>
         </div>
-        <Button className="shrink-0 gap-2 font-medium">
+        <Button onClick={handleOpenModal} className="shrink-0 gap-2 font-medium">
           <Plus className="h-4 w-4" />
           Añadir Dominio
         </Button>
@@ -137,6 +172,60 @@ export default function DomainsPage() {
           </TableBody>
         </Table>
       </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold tracking-tight">Vincular Nuevo Dominio</h2>
+              <Button variant="ghost" size="icon" onClick={() => setIsModalOpen(false)} className="h-8 w-8">
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Dominio Personalizado</label>
+                <Input 
+                  placeholder="ej. web.midominio.com" 
+                  value={formDomain}
+                  onChange={(e) => setFormDomain(e.target.value)}
+                  autoComplete="off"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Coolify intentará provisionar un certificado SSL vía Let's Encrypt automáticamente.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Proyecto de Destino</label>
+                <select 
+                  className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  value={formProjectId}
+                  onChange={(e) => setFormProjectId(e.target.value)}
+                >
+                  <option value="" className="bg-background text-muted-foreground">Seleccionar Aplicación...</option>
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id} className="bg-background text-foreground">
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-8 flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setIsModalOpen(false)} disabled={formSaving}>
+                Cancelar
+              </Button>
+              <Button onClick={handleSaveDomain} disabled={!formDomain.trim() || !formProjectId || formSaving}>
+                {formSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {formSaving ? 'Vinculando...' : 'Añadir al Proyecto'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 } // Documented: Migrated placeholder arrays to synchronized Prisma fetch pipelines.
