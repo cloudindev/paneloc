@@ -26,6 +26,7 @@ export async function getProjectsFromDB() {
                 projects: {
                   include: {
                     resources: {
+                      where: { type: { in: ["WEB_SERVICE", "WORKER"] } },
                       orderBy: { createdAt: "desc" }
                     }
                   }
@@ -86,6 +87,7 @@ export async function getDashboardContext() {
                 projects: {
                   include: {
                     resources: {
+                      where: { type: { in: ["WEB_SERVICE", "WORKER"] } },
                       orderBy: { createdAt: "desc" }
                     }
                   }
