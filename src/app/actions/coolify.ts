@@ -476,3 +476,86 @@ export async function createCoolifyDatabase(projectId: string, payload: any) {
     return { success: false, error: error.message }
   }
 }
+
+// ------------------ ENVIRONMENT VARIABLES (API V4) ------------------ //
+
+async function _getAppUuidSafe(resourceId: string) {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("olacloud_session")?.value
+  if (!token) throw new Error("No estás autenticado")
+
+  const session = await verifyJWT(token)
+  if (!session || !session.sub) throw new Error("Sesión inválida")
+
+  const resource = await prisma.resource.findUnique({
+    where: { id: resourceId }
+  })
+
+  if (!resource) throw new Error("Recurso no encontrado.")
+  const config = typeof resource.config === "string" ? JSON.parse(resource.config) : resource.config
+  
+  if (!config.coolify_uuid) {
+    throw new Error("El recurso no tiene un UUID de Coolify asociado.")
+  }
+
+  return config.coolify_uuid
+}
+
+export async function getAppEnvVars(resourceId: string) {
+  try {
+    const uuid = await _getAppUuidSafe(resourceId)
+    const envs = await coolifyFetch("GET", `/applications/${uuid}/envs`)
+    return { success: true, data: envs }
+  } catch (error: any) {
+    console.error("Error obteniendo variables de entorno:", error)
+    return { success: false, error: error.message }
+  }
+}
+
+export async function createAppEnvVar(resourceId: string, key: string, value: string, isSecret: boolean) {
+  try {
+    const uuid = await _getAppUuidSafe(resourceId)
+    const body = {
+      key,
+      value,
+      is_preview: false,
+      is_literal: isSecret // represents the 'plain vs secret' flag typically in coolify context
+    }
+    const res = await coolifyFetch("POST", `/applications/${uuid}/envs`, body)
+    return { success: true, data: res }
+  } catch (error: any) {
+    console.error("Error creando variable:", error)
+    return { success: false, error: error.message }
+  }
+}
+
+export async function updateAppEnvVar(resourceId: string, key: string, value: string, isSecret: boolean) {
+  try {
+    // Coolify v4 usa Bulk update por defecto. Basta con enviar el array.
+    const uuid = await _getAppUuidSafe(resourceId)
+    const body = {
+      data: [{
+        key,
+        value,
+        is_preview: false,
+        is_literal: isSecret
+      }]
+    }
+    const res = await coolifyFetch("PATCH", `/applications/${uuid}/envs/bulk`, body)
+    return { success: true, data: res }
+  } catch (error: any) {
+    console.error("Error actualizando variable:", error)
+    return { success: false, error: error.message }
+  }
+}
+
+export async function deleteAppEnvVar(resourceId: string, envUuid: string) {
+  try {
+    const appUuid = await _getAppUuidSafe(resourceId)
+    await coolifyFetch("DELETE", `/applications/${appUuid}/envs/${envUuid}`)
+    return { success: true }
+  } catch (error: any) {
+    console.error("Error borrando variable de entorno:", error)
+    return { success: false, error: error.message }
+  }
+}

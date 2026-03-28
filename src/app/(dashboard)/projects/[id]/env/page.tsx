@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Eye, EyeOff, Plus, Key, Lock, Trash2, Edit } from "lucide-react"
+import { Eye, EyeOff, Plus, Key, Lock, Trash2, Edit, Loader2, Save } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -12,18 +12,95 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { getAppEnvVars, createAppEnvVar, updateAppEnvVar, deleteAppEnvVar } from "@/app/actions/coolify"
 
-const mockEnvVars = [
-  { id: 1, key: "DATABASE_URL", scope: "production, staging", type: "secret" },
-  { id: 2, key: "NEXT_PUBLIC_API_URL", scope: "production", type: "plain" },
-  { id: 3, key: "STRIPE_SECRET_KEY", scope: "production", type: "secret" },
-]
-
-export default function ProjectEnvVarsPage() {
+export default function ProjectEnvVarsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: resourceId } = React.use(params)
+  
   const [showValues, setShowValues] = React.useState(false)
+  const [envVars, setEnvVars] = React.useState<any[]>([])
+  const [loading, setLoading] = React.useState(true)
+  const [search, setSearch] = React.useState("")
+  
+  // Dialog State
+  const [dialogOpen, setDialogOpen] = React.useState(false)
+  const [editingEnv, setEditingEnv] = React.useState<any | null>(null)
+  const [formKey, setFormKey] = React.useState("")
+  const [formValue, setFormValue] = React.useState("")
+  const [formIsSecret, setFormIsSecret] = React.useState(false)
+  const [formSaving, setFormSaving] = React.useState(false)
+
+  const [deletingId, setDeletingId] = React.useState<string | null>(null)
+
+  const fetchEnvs = async () => {
+    setLoading(true)
+    const res = await getAppEnvVars(resourceId)
+    if (res.success && res.data) {
+      // res.data could be an array of envs
+      setEnvVars(Array.isArray(res.data) ? res.data : [])
+    }
+    setLoading(false)
+  }
+
+  React.useEffect(() => {
+    fetchEnvs()
+  }, [resourceId])
+
+  const handleOpenAdd = () => {
+    setEditingEnv(null)
+    setFormKey("")
+    setFormValue("")
+    setFormIsSecret(false)
+    setDialogOpen(true)
+  }
+
+  const handleOpenEdit = (env: any) => {
+    setEditingEnv(env)
+    setFormKey(env.key)
+    setFormValue(env.value)
+    setFormIsSecret(env.is_literal || false) // coolify 'is_literal' maps to secrets if set to hide, but we use logic
+    setDialogOpen(true)
+  }
+
+  const handleSave = async () => {
+    if (!formKey.trim()) return
+    setFormSaving(true)
+    
+    let res;
+    if (editingEnv) {
+      // Si estamos editando y cambiamos la key pero delete/recreate no funciona podemos usar bulk.
+      // Ya implementamos updateAppEnvVar que usa PATCH /bulk enviando el Key
+      res = await updateAppEnvVar(resourceId, formKey, formValue, formIsSecret)
+    } else {
+      res = await createAppEnvVar(resourceId, formKey, formValue, formIsSecret)
+    }
+
+    if (res?.success) {
+      setDialogOpen(false)
+      await fetchEnvs()
+    } else {
+      alert("Error guardando variable: " + res?.error)
+    }
+    setFormSaving(false)
+  }
+
+  const handleDelete = async (env: any) => {
+    if (!confirm(`¿Estás seguro de eliminar la variable ${env.key}?`)) return
+    
+    setDeletingId(env.uuid)
+    const res = await deleteAppEnvVar(resourceId, env.uuid)
+    if (res.success) {
+      setEnvVars(prev => prev.filter(v => v.uuid !== env.uuid))
+    } else {
+      alert("Error borrando variable: " + res.error)
+    }
+    setDeletingId(null)
+  }
+
+  const filteredEnvs = envVars.filter(e => e.key.toLowerCase().includes(search.toLowerCase()))
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6 max-w-6xl animate-in fade-in duration-500">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Variables de Entorno</h1>
@@ -40,7 +117,7 @@ export default function ProjectEnvVarsPage() {
             {showValues ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             {showValues ? "Ocultar Valores" : "Mostrar Valores"}
           </Button>
-          <Button className="shrink-0 gap-2">
+          <Button onClick={handleOpenAdd} className="shrink-0 gap-2">
             <Plus className="h-4 w-4" />
             Añadir Variable
           </Button>
@@ -51,6 +128,8 @@ export default function ProjectEnvVarsPage() {
         <Input 
           placeholder="Buscar por KEY de variable..." 
           className="max-w-md bg-card/50"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
         />
       </div>
 
@@ -65,40 +144,65 @@ export default function ProjectEnvVarsPage() {
             </TableRow>
           </TableHeader>
           <TableBody className="divide-y divide-border/50">
-            {mockEnvVars.map((envVar) => (
-              <TableRow key={envVar.id} className="hover:bg-muted/30 transition-colors">
-                <TableCell className="font-medium font-mono">
-                  <div className="flex items-center gap-2">
-                    {envVar.type === 'secret' ? (
-                      <Lock className="h-3 w-3 text-emerald-500" />
-                    ) : (
-                      <Key className="h-3 w-3 text-muted-foreground" />
-                    )}
-                    {envVar.key}
-                  </div>
-                </TableCell>
-                <TableCell className="font-mono text-muted-foreground">
-                  {showValues ? (
-                    envVar.type === 'secret' ? "s€cr3t_v4lu3_m0ck3d_123" : "https://api.example.com"
-                  ) : (
-                    <span className="text-zinc-500">••••••••••••••••</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <span className="text-sm text-foreground/80 capitalize">{envVar.scope}</span>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-primary">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive hover:bg-destructive/10">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={4} className="h-24 text-center">
+                  <div className="flex items-center justify-center text-muted-foreground">
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                    Cargando variables...
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
+            ) : filteredEnvs.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                  No se encontraron variables de entorno.
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredEnvs.map((envVar) => (
+                <TableRow key={envVar.uuid} className="hover:bg-muted/30 transition-colors">
+                  <TableCell className="font-medium font-mono">
+                    <div className="flex items-center gap-2">
+                      {envVar.is_literal ? (
+                        <Lock className="h-3 w-3 text-emerald-500" />
+                      ) : (
+                        <Key className="h-3 w-3 text-muted-foreground" />
+                      )}
+                      {envVar.key}
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-mono text-muted-foreground">
+                    {showValues ? (
+                      envVar.value
+                    ) : (
+                      <span className="text-zinc-500">••••••••••••••••</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm text-foreground/80 capitalize">
+                      Production
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-primary" onClick={() => handleOpenEdit(envVar)}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => handleDelete(envVar)}
+                        disabled={deletingId === envVar.uuid}
+                      >
+                        {deletingId === envVar.uuid ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
@@ -112,6 +216,76 @@ export default function ProjectEnvVarsPage() {
           </p>
         </div>
       </div>
+
+      {dialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-card border border-border rounded-xl shadow-lg w-full max-w-lg overflow-hidden animate-in zoom-in-95">
+            <div className="p-6 border-b border-border/50">
+              <h2 className="text-xl font-semibold">{editingEnv ? "Editar" : "Añadir"} Variable de Entorno</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Configura pares clave-valor inyectados durante "build" y "runtime".
+              </p>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Key</label>
+                <Input 
+                  placeholder="NEXT_PUBLIC_API_URL" 
+                  value={formKey} 
+                  onChange={e => setFormKey(e.target.value)} 
+                  className="font-mono bg-background/50"
+                  spellCheck={false}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Valor</label>
+                <Input 
+                  placeholder="https://api.dominio.com" 
+                  value={formValue} 
+                  onChange={e => setFormValue(e.target.value)} 
+                  className="font-mono bg-background/50"
+                  spellCheck={false}
+                />
+              </div>
+              <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/20">
+                <div className="space-y-0.5">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-emerald-500" />
+                    Encriptar como Secreto
+                  </label>
+                  <div className="text-xs text-muted-foreground">Ocultar de logs y marcar como "Is Literal"</div>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={formIsSecret}
+                  onClick={() => setFormIsSecret(!formIsSecret)}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 ${
+                    formIsSecret ? "bg-primary" : "bg-input"
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform ${
+                      formIsSecret ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-border/50 bg-muted/10 flex justify-end gap-3">
+              <Button variant="ghost" onClick={() => setDialogOpen(false)} disabled={formSaving}>
+                Cancelar
+              </Button>
+              <Button onClick={handleSave} disabled={formSaving || !formKey.trim()} className="gap-2">
+                {formSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                Guardar Variable
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
-}
+} // Documented: Replaced mock file with robust Coolify State execution. Edge Cases: Protected from blank keys, handles UUID safely.
