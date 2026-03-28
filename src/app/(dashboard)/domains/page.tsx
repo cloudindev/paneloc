@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Globe, Plus, ShieldCheck, ShieldAlert, Check, Loader2, X } from "lucide-react"
+import { Globe, Plus, ShieldCheck, ShieldAlert, Check, Loader2, X, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { getAllDomains, addDomainToResource } from "@/app/actions/domains"
+import { getAllDomains, addDomainToResource, removeDomainFromResource } from "@/app/actions/domains"
 import { getProjectsFromDB } from "@/app/actions/projects"
 
 export default function DomainsPage() {
@@ -28,6 +28,7 @@ export default function DomainsPage() {
   const [formIncludeWww, setFormIncludeWww] = React.useState(true)
   const [formProjectId, setFormProjectId] = React.useState("")
   const [formSaving, setFormSaving] = React.useState(false)
+  const [deletingId, setDeletingId] = React.useState<string | null>(null)
 
   const [modalStep, setModalStep] = React.useState<1 | 2>(1)
 
@@ -69,6 +70,19 @@ export default function DomainsPage() {
     setFormSaving(false)
   }
 
+  const handleDeleteDomain = async (resourceId: string, domainName: string) => {
+    if (!confirm(`¿Estás seguro de que quieres desvincular el dominio ${domainName}?`)) return
+    
+    setDeletingId(domainName)
+    const res = await removeDomainFromResource(resourceId, domainName)
+    if (res.success) {
+      await fetchAll()
+    } else {
+      alert("Error eliminando dominio: " + res.error)
+    }
+    setDeletingId(null)
+  }
+
   const filteredDomains = domains.filter((d: any) => 
     d.name.toLowerCase().includes(search.toLowerCase()) || 
     d.project.toLowerCase().includes(search.toLowerCase())
@@ -107,12 +121,13 @@ export default function DomainsPage() {
               <TableHead>Tipo</TableHead>
               <TableHead>Estado DNS</TableHead>
               <TableHead className="text-right">Certificado SSL</TableHead>
+              <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className="divide-y divide-border/50">
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                   <div className="flex items-center justify-center gap-2">
                     <Loader2 className="w-5 h-5 animate-spin" />
                     Buscando configuraciones...
@@ -121,7 +136,7 @@ export default function DomainsPage() {
               </TableRow>
             ) : filteredDomains.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                   No se han encontrado dominios. Despliega una aplicación primero.
                 </TableCell>
               </TableRow>
@@ -170,6 +185,21 @@ export default function DomainsPage() {
                         </Badge>
                       )}
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                      onClick={() => handleDeleteDomain(domain.resourceId, domain.name)}
+                      disabled={deletingId === domain.name}
+                    >
+                      {deletingId === domain.name ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))

@@ -137,3 +137,57 @@ export async function addDomainToResource(resourceId: string, newDomain: string,
     return { success: false, error: error.message }
   }
 }
+
+export async function removeDomainFromResource(resourceId: string, domainToRemove: string) {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get("olacloud_session")?.value
+    if (!token) throw new Error("No estás autenticado")
+
+    const session = await verifyJWT(token)
+    if (!session || !session.sub) throw new Error("Sesión inválida")
+
+    const resource = await prisma.resource.findUnique({
+      where: { id: resourceId },
+      include: { project: { include: { organization: { include: { members: { where: { userId: session.sub } } } } } } }
+    })
+
+    if (!resource || resource.project.organization.members.length === 0) {
+      throw new Error("Recurso no encontrado o sin acceso")
+    }
+
+    const config = typeof resource.config === "string" ? JSON.parse(resource.config) : resource.config
+    if (!config.coolify_uuid) {
+      throw new Error("El recurso no tiene un UUID válido de Coolify")
+    }
+
+    let currentFqdnStr = config.custom_fqdn || ""
+    if (!currentFqdnStr) return { success: true } // Nada que borrar
+
+    // Parse array and filter out the target
+    const domainArray = currentFqdnStr.split(',').map((d: string) => d.trim()).filter(Boolean)
+    const filteredArray = domainArray.filter((d: string) => {
+      // Clean domain for absolute match comparison
+      const pureD = d.toLowerCase().replace(/^https?:\/\//, "")
+      const pureTarget = domainToRemove.toLowerCase().replace(/^https?:\/\//, "")
+      return pureD !== pureTarget
+    })
+
+    const updatedFqdnStr = filteredArray.join(',')
+
+    const { coolifyFetch } = await import("@/app/actions/coolify")
+    await coolifyFetch("PATCH", `/applications/${config.coolify_uuid}`, { domains: updatedFqdnStr })
+
+    const updatedConfig = { ...config, custom_fqdn: updatedFqdnStr }
+    await prisma.resource.update({
+      where: { id: resourceId },
+      data: { config: updatedConfig }
+    })
+
+    return { success: true }
+
+  } catch (error: any) {
+    console.error("Remove domain error:", error.message)
+    return { success: false, error: error.message }
+  }
+}
