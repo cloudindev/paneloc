@@ -25,6 +25,7 @@ export default function DomainsPage() {
   // Modal State
   const [isModalOpen, setIsModalOpen] = React.useState(false)
   const [formDomain, setFormDomain] = React.useState("")
+  const [formIncludeWww, setFormIncludeWww] = React.useState(true)
   const [formProjectId, setFormProjectId] = React.useState("")
   const [formSaving, setFormSaving] = React.useState(false)
 
@@ -45,6 +46,7 @@ export default function DomainsPage() {
 
   const handleOpenModal = () => {
     setFormDomain("")
+    setFormIncludeWww(true)
     setFormProjectId("")
     setIsModalOpen(true)
   }
@@ -53,7 +55,7 @@ export default function DomainsPage() {
     if (!formDomain.trim() || !formProjectId || formSaving) return
     setFormSaving(true)
     
-    const res = await addDomainToResource(formProjectId, formDomain)
+    const res = await addDomainToResource(formProjectId, formDomain, formIncludeWww)
     
     if (res.success) {
       setIsModalOpen(false)
@@ -197,7 +199,20 @@ export default function DomainsPage() {
                 </p>
               </div>
 
-              <div className="space-y-2">
+              <div className="flex items-center space-x-2 pt-2">
+                <input
+                  type="checkbox"
+                  id="includeWww"
+                  checked={formIncludeWww}
+                  onChange={(e) => setFormIncludeWww(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                />
+                <label htmlFor="includeWww" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Añadir alias www. (Redirección Automática)
+                </label>
+              </div>
+
+              <div className="space-y-2 pb-2">
                 <label className="text-sm font-medium text-foreground">Proyecto de Destino</label>
                 <select 
                   className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"

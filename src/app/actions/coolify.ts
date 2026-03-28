@@ -148,7 +148,7 @@ export async function deployToCoolify(params: {
 
     // 2.B Inyectar el FQDN generado mediante un update al recurso tras su creación
     try {
-      await coolifyFetch("PATCH", `/applications/${appUuid}`, { fqdn: customFqdn })
+      await coolifyFetch("PATCH", `/applications/${appUuid}`, { domains: customFqdn })
     } catch (e: any) {
       console.warn("Aviso: el update de FQDN falló", e.message)
     }

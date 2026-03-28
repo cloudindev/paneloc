@@ -75,7 +75,7 @@ export async function getAllDomains() {
   }
 }
 
-export async function addDomainToResource(resourceId: string, newDomain: string) {
+export async function addDomainToResource(resourceId: string, newDomain: string, includeWww: boolean = false) {
   try {
     const cookieStore = await cookies()
     const token = cookieStore.get("olacloud_session")?.value
@@ -102,7 +102,12 @@ export async function addDomainToResource(resourceId: string, newDomain: string)
     let currentFqdnStr = config.custom_fqdn || ""
     const cleanDomain = newDomain.trim().toLowerCase().replace(/^https?:\/\//, "")
     // Coolify expects full URLs natively usually, but will accept custom naked domains. Better to enforce standard:
-    const newFqdnUrl = `https://${cleanDomain}` 
+    let newFqdnUrl = `https://${cleanDomain}` 
+    
+    // Regla de usuario: Orientación automática a WWW
+    if (includeWww && !cleanDomain.startsWith("www.")) {
+      newFqdnUrl += `,https://www.${cleanDomain}`
+    }
 
     // Revisar duplicado
     if (currentFqdnStr.includes(cleanDomain)) {
@@ -114,8 +119,8 @@ export async function addDomainToResource(resourceId: string, newDomain: string)
     // Fetch the dynamic helper
     const { coolifyFetch } = await import("@/app/actions/coolify")
     
-    // Impactamos a Coolify
-    await coolifyFetch("PATCH", `/applications/${config.coolify_uuid}`, { fqdn: updatedFqdnStr })
+    // Impactamos a Coolify con la Key correcta 'domains'
+    await coolifyFetch("PATCH", `/applications/${config.coolify_uuid}`, { domains: updatedFqdnStr })
 
     // Si Coolify responde ok (no lanza Excepción), sincronizamos nuestra DB local:
     const updatedConfig = { ...config, custom_fqdn: updatedFqdnStr }
