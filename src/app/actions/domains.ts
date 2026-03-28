@@ -55,10 +55,10 @@ export async function getAllDomains() {
             
             allDomains.push({
               id: `${res.id}-${idx}`,
+              resourceId: res.id,
               name: domain,
               project: res.name,
               type: isInternal ? "internal" : (isWildcard ? "wildcard" : "custom"),
-              // Inferimos estado simulado si está corriendo el servicio (normalmente con Coolify/Traefik se autogeneran si apunta el DNS)
               ssl: res.status === "running" ? "active" : "pending",
               status: res.status === "running" ? "verified" : "unverified",
             })
