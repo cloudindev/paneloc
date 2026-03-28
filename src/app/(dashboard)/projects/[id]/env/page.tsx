@@ -63,7 +63,7 @@ export default function ProjectEnvVarsPage({ params }: { params: Promise<{ id: s
   }
 
   const handleSave = async () => {
-    if (!formKey.trim()) return
+    if (!formKey.trim() || formSaving) return
     setFormSaving(true)
     
     let res;
