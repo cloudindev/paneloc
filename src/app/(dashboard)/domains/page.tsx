@@ -29,6 +29,8 @@ export default function DomainsPage() {
   const [formProjectId, setFormProjectId] = React.useState("")
   const [formSaving, setFormSaving] = React.useState(false)
 
+  const [modalStep, setModalStep] = React.useState<1 | 2>(1)
+
   const fetchAll = async () => {
     setLoading(true)
     const [liveDomains, liveProjects] = await Promise.all([
@@ -48,6 +50,7 @@ export default function DomainsPage() {
     setFormDomain("")
     setFormIncludeWww(true)
     setFormProjectId("")
+    setModalStep(1)
     setIsModalOpen(true)
   }
 
@@ -58,8 +61,8 @@ export default function DomainsPage() {
     const res = await addDomainToResource(formProjectId, formDomain, formIncludeWww)
     
     if (res.success) {
-      setIsModalOpen(false)
       await fetchAll()
+      setModalStep(2) // Pasamos al paso de instrucciones DNS
     } else {
       alert("Error enlazando dominio: " + res.error)
     }
@@ -179,65 +182,126 @@ export default function DomainsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold tracking-tight">Vincular Nuevo Dominio</h2>
+              <h2 className="text-lg font-semibold tracking-tight">
+                {modalStep === 1 ? "Vincular Nuevo Dominio" : "Configuración DNS Requerida"}
+              </h2>
               <Button variant="ghost" size="icon" onClick={() => setIsModalOpen(false)} className="h-8 w-8">
                 <X className="h-4 w-4" />
               </Button>
             </div>
             
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Dominio Personalizado</label>
-                <Input 
-                  placeholder="ej. web.midominio.com" 
-                  value={formDomain}
-                  onChange={(e) => setFormDomain(e.target.value)}
-                  autoComplete="off"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Coolify intentará provisionar un certificado SSL vía Let's Encrypt automáticamente.
-                </p>
-              </div>
+            {modalStep === 1 ? (
+              <>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Dominio Personalizado</label>
+                    <Input 
+                      placeholder="ej. midominio.com" 
+                      value={formDomain}
+                      onChange={(e) => setFormDomain(e.target.value)}
+                      autoComplete="off"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Coolify intentará provisionar un certificado SSL vía Let's Encrypt automáticamente.
+                    </p>
+                  </div>
 
-              <div className="flex items-center space-x-2 pt-2">
-                <input
-                  type="checkbox"
-                  id="includeWww"
-                  checked={formIncludeWww}
-                  onChange={(e) => setFormIncludeWww(e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                />
-                <label htmlFor="includeWww" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Añadir alias www. (Redirección Automática)
-                </label>
-              </div>
+                  <div className="flex items-center space-x-2 pt-2">
+                    <input
+                      type="checkbox"
+                      id="includeWww"
+                      checked={formIncludeWww}
+                      onChange={(e) => setFormIncludeWww(e.target.checked)}
+                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <label htmlFor="includeWww" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                      Añadir alias www. (Redirección Automática)
+                    </label>
+                  </div>
 
-              <div className="space-y-2 pb-2">
-                <label className="text-sm font-medium text-foreground">Proyecto de Destino</label>
-                <select 
-                  className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  value={formProjectId}
-                  onChange={(e) => setFormProjectId(e.target.value)}
-                >
-                  <option value="" className="bg-background text-muted-foreground">Seleccionar Aplicación...</option>
-                  {projects.map((p) => (
-                    <option key={p.id} value={p.id} className="bg-background text-foreground">
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+                  <div className="space-y-2 pb-2">
+                    <label className="text-sm font-medium text-foreground">Proyecto de Destino</label>
+                    <select 
+                      className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      value={formProjectId}
+                      onChange={(e) => setFormProjectId(e.target.value)}
+                    >
+                      <option value="" className="bg-background text-muted-foreground">Seleccionar Aplicación...</option>
+                      {projects.map((p) => (
+                         <option key={p.id} value={p.id} className="bg-background text-foreground">
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
 
-            <div className="mt-8 flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setIsModalOpen(false)} disabled={formSaving}>
-                Cancelar
-              </Button>
-              <Button onClick={handleSaveDomain} disabled={!formDomain.trim() || !formProjectId || formSaving}>
-                {formSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {formSaving ? 'Vinculando...' : 'Añadir al Proyecto'}
-              </Button>
-            </div>
+                <div className="mt-8 flex justify-end gap-3">
+                  <Button variant="outline" onClick={() => setIsModalOpen(false)} disabled={formSaving}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleSaveDomain} disabled={!formDomain.trim() || !formProjectId || formSaving}>
+                    {formSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {formSaving ? 'Vinculando...' : 'Añadir al Proyecto'}
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="space-y-6 text-center">
+                <div className="mx-auto w-12 h-12 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mb-2">
+                  <Check className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-foreground mb-1">
+                    ¡Dominio vinculado exitosamente!
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Para que el tráfico llegue correctamente, debes configurar los siguientes registros en tu proveedor de dominio (GoDaddy, Cloudflare, Namecheap, etc).
+                  </p>
+                </div>
+
+                <div className="bg-muted/40 rounded-lg border border-border/50 overflow-hidden text-left divide-y divide-border/50 font-mono text-sm">
+                  <div className="p-3 flex justify-between items-center">
+                    <span className="text-muted-foreground">TIPO</span>
+                    <span className="font-semibold text-cyan-500">A</span>
+                  </div>
+                  <div className="p-3 flex justify-between items-center">
+                    <span className="text-muted-foreground">NOMBRE</span>
+                    <span className="font-semibold">@ <span className="text-xs text-muted-foreground font-sans">(Raíz)</span></span>
+                  </div>
+                  <div className="p-3 flex flex-col gap-1 items-end">
+                    <div className="flex justify-between w-full items-center">
+                      <span className="text-muted-foreground">VALOR (IP)</span>
+                      <span className="font-semibold text-foreground bg-background px-2 py-1 rounded border border-border">IP_DE_TU_SERVIDOR</span>
+                    </div>
+                  </div>
+                </div>
+
+                {formIncludeWww && !formDomain.startsWith("www.") && (
+                 <div className="bg-muted/40 rounded-lg border border-border/50 overflow-hidden text-left divide-y divide-border/50 font-mono text-sm mt-4">
+                    <div className="p-3 flex justify-between items-center bg-card/50">
+                      <span className="text-xs font-sans font-medium text-muted-foreground uppercase tracking-wider">Alias WWW CNAME</span>
+                    </div>
+                    <div className="p-3 flex justify-between items-center">
+                      <span className="text-muted-foreground">TIPO</span>
+                      <span className="font-semibold text-purple-400">CNAME</span>
+                    </div>
+                    <div className="p-3 flex justify-between items-center">
+                      <span className="text-muted-foreground">NOMBRE</span>
+                      <span className="font-semibold text-foreground">www</span>
+                    </div>
+                    <div className="p-3 flex justify-between items-center">
+                      <span className="text-muted-foreground">DESTINO</span>
+                      <span className="font-semibold text-foreground">{formDomain.replace(/^https?:\/\//, '')}</span>
+                    </div>
+                 </div>
+                )}
+
+                <Button onClick={() => setIsModalOpen(false)} className="w-full mt-4 font-medium">
+                  Entendido, ya lo he configurado
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       )}
