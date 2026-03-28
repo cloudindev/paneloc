@@ -302,7 +302,7 @@ export default function DomainsPage() {
                   <div className="p-3 flex flex-col gap-1 items-end">
                     <div className="flex justify-between w-full items-center">
                       <span className="text-muted-foreground">VALOR (IP)</span>
-                      <span className="font-semibold text-foreground bg-background px-2 py-1 rounded border border-border">IP_DE_TU_SERVIDOR</span>
+                      <span className="font-semibold text-foreground bg-background px-2 py-1 rounded border border-border">217.182.95.11</span>
                     </div>
                   </div>
                 </div>
