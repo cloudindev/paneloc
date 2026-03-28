@@ -514,14 +514,18 @@ export async function getAppEnvVars(resourceId: string) {
 
 export async function createAppEnvVar(resourceId: string, key: string, value: string, isSecret: boolean) {
   try {
+    // Al usar PATCH /bulk, Coolify opera de manera idempotente ("upsert" por Key),
+    // resolviendo así cualquier bug de duplicación por lado del servidor (Coolify POST API issue).
     const uuid = await _getAppUuidSafe(resourceId)
     const body = {
-      key,
-      value,
-      is_preview: false,
-      is_literal: isSecret // represents the 'plain vs secret' flag typically in coolify context
+      data: [{
+        key,
+        value,
+        is_preview: false,
+        is_literal: isSecret
+      }]
     }
-    const res = await coolifyFetch("POST", `/applications/${uuid}/envs`, body)
+    const res = await coolifyFetch("PATCH", `/applications/${uuid}/envs/bulk`, body)
     return { success: true, data: res }
   } catch (error: any) {
     console.error("Error creando variable:", error)
