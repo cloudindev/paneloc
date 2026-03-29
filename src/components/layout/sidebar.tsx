@@ -50,11 +50,24 @@ export function Sidebar({ projects = [] }: { projects?: any[] }) {
   return (
     <div className="flex w-64 flex-col border-r border-border bg-card/50 backdrop-blur-xl">
       <div className="flex h-16 shrink-0 items-center px-6">
-        <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-          <CloudLightning className="h-6 w-6 text-primary" />
-          <span className="text-lg font-bold tracking-tight">
-            OLA <span className="text-primary font-light">CLOUD</span>
-          </span>
+        <Link href="/" className="group relative flex items-center justify-center w-[120px] h-[42px]">
+          {/* Logo principal en su estado base (blanco) */}
+          <img 
+            src="/ola-logo.png" 
+            alt="OLA CLOUD" 
+            className="object-contain w-full h-full"
+          />
+          {/* Capa Mágica Superpuesta (Se revela al hacer el Hover) */}
+          <div 
+            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 logo-shimmer"
+            style={{
+              WebkitMaskImage: 'url(/ola-logo.png)',
+              WebkitMaskSize: 'contain',
+              WebkitMaskRepeat: 'no-repeat',
+              WebkitMaskPosition: 'center',
+              clipPath: 'polygon(33.5% 0%, 100% 0%, 100% 100%, 37% 100%)'
+            }}
+          />
         </Link>
       </div>
       

@@ -70,6 +70,11 @@ body {
   color: var(--primary);
 }
 
+@keyframes bgPan {
+  0% { background-position: 200% center; }
+  100% { background-position: 0% center; }
+}
+
 @layer utilities {
   .glass-panel {
     background-color: rgba(15, 17, 26, 0.6);
@@ -77,5 +82,12 @@ body {
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(30, 41, 59, 0.5);
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+
+  .logo-shimmer {
+    /* Los colores de OLA: Teals, Azules y Púrpuras, cerrando el bucle con el teal. */
+    background: linear-gradient(90deg, #00FFC8 0%, #0ea5e9 33%, #d946ef 66%, #00FFC8 100%);
+    background-size: 200% auto;
+    animation: bgPan 3s linear infinite;
   }
 }

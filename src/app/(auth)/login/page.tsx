@@ -32,13 +32,24 @@ export default function LoginPage() {
   return (
     <div className="w-full max-w-md">
       <div className="mb-8 flex flex-col items-center justify-center space-y-2">
-        <Link href="https://olacloud.es" className="flex flex-col items-center justify-center space-y-2 transition-opacity hover:opacity-80">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/20 ring-1 ring-primary/30">
-            <CloudLightning className="h-6 w-6 text-primary" />
-          </div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            OLA <span className="font-light text-primary">CLOUD</span>
-          </h1>
+        <Link href="https://olacloud.es" className="group relative flex items-center justify-center w-[160px] h-[52px]">
+          {/* Logo principal en su estado base (blanco) */}
+          <img 
+            src="/ola-logo.png" 
+            alt="OLA CLOUD" 
+            className="object-contain w-full h-full"
+          />
+          {/* Capa Mágica Superpuesta (Se revela al hacer el Hover) */}
+          <div 
+            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 logo-shimmer"
+            style={{
+              WebkitMaskImage: 'url(/ola-logo.png)',
+              WebkitMaskSize: 'contain',
+              WebkitMaskRepeat: 'no-repeat',
+              WebkitMaskPosition: 'center',
+              clipPath: 'polygon(33.5% 0%, 100% 0%, 100% 100%, 37% 100%)'
+            }}
+          />
         </Link>
         <p className="text-sm text-muted-foreground">
           Premium infrastructure for your applications
