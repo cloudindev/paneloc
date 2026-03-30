@@ -20,7 +20,6 @@ import { cn } from "@/lib/utils"
 const globalNavigation = [
   { name: 'Proyectos', href: '/projects', icon: FolderGit2 },
   { name: 'Dominios', href: '/domains', icon: Globe },
-  { name: 'Bases de datos', href: '/databases', icon: Database },
 ]
 
 export function Sidebar({ projects = [] }: { projects?: any[] }) {
@@ -72,100 +71,110 @@ export function Sidebar({ projects = [] }: { projects?: any[] }) {
       </div>
       
       <nav className="flex flex-1 flex-col p-4 overflow-y-auto">
-        <Button asChild className="mb-6 w-full justify-start gap-2 bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary border border-primary/20">
-          <Link href="/projects/new">
-            <PlusCircle className="h-4 w-4" /> Nueva App
-          </Link>
-        </Button>
+        <div className="flex flex-col gap-y-6">
+          <div>
+            <div className="text-xs font-semibold text-muted-foreground mb-4 px-2 uppercase tracking-wider flex items-center gap-2">
+              AI Cloud <div className="h-px bg-border flex-1 ml-2"></div>
+            </div>
+            
+            <Button asChild className="mb-4 w-full justify-start gap-2 bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary border border-primary/20">
+              <Link href="/projects/new">
+                <PlusCircle className="h-4 w-4" /> Nueva App
+              </Link>
+            </Button>
 
-        {isProjectContext ? (
-          <div className="flex flex-col gap-y-6">
-            <div>
-              <div className="text-xs font-semibold text-muted-foreground mb-2 px-2 uppercase tracking-wider flex items-center gap-2">
-                Compute <div className="h-px bg-border flex-1 ml-2"></div>
-              </div>
-              <ul role="list" className="flex flex-col gap-y-1">
-                {projectComputeNav.map((item) => {
-                  const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href)
+            {!isProjectContext && (
+              <ul role="list" className="flex flex-1 flex-col gap-y-1">
+                {globalNavigation.map((item) => {
+                  const isActive = pathname === item.href || (pathname !== '/' && pathname?.startsWith(item.href))
                   return (
                     <li key={item.name}>
                       <Link
                         href={item.href}
                         className={cn(
-                          isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                          isActive
+                            ? "bg-primary/10 text-primary"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
                           "group flex gap-x-3 rounded-md p-2 text-sm font-medium leading-6 transition-all duration-200"
                         )}
                       >
-                        <item.icon className={cn(isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground", "h-4 w-4 shrink-0 transition-colors mt-1")} />
+                        <item.icon
+                          className={cn(
+                            isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
+                            "h-5 w-5 shrink-0 transition-colors"
+                          )}
+                          aria-hidden="true"
+                        />
                         {item.name}
                       </Link>
                     </li>
                   )
                 })}
               </ul>
-            </div>
-
-            <div>
-              <div className="text-xs font-semibold text-muted-foreground mb-2 px-2 uppercase tracking-wider flex items-center gap-2">
-                Database <div className="h-px bg-border flex-1 ml-2"></div>
-              </div>
-              <ul role="list" className="flex flex-col gap-y-1">
-                {projectDatabaseNav.map((item) => (
-                  <li key={item.name}>
-                    <Link href={item.href} className={cn(pathname.startsWith(item.href) ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground", "group flex gap-x-3 rounded-md p-2 text-sm font-medium leading-6 transition-all duration-200")}>
-                      <item.icon className={cn(pathname.startsWith(item.href) ? "text-primary" : "text-muted-foreground group-hover:text-foreground", "h-4 w-4 shrink-0 transition-colors mt-1")} />
-                      {item.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <div className="text-xs font-semibold text-muted-foreground mb-2 px-2 uppercase tracking-wider flex items-center gap-2">
-                Storage <div className="h-px bg-border flex-1 ml-2"></div>
-              </div>
-              <ul role="list" className="flex flex-col gap-y-1">
-                {projectStorageNav.map((item) => (
-                  <li key={item.name}>
-                    <Link href={item.href} className={cn(pathname.startsWith(item.href) ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground", "group flex gap-x-3 rounded-md p-2 text-sm font-medium leading-6 transition-all duration-200")}>
-                      <item.icon className={cn(pathname.startsWith(item.href) ? "text-primary" : "text-muted-foreground group-hover:text-foreground", "h-4 w-4 shrink-0 transition-colors mt-1")} />
-                      {item.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            )}
           </div>
-        ) : (
-          <ul role="list" className="flex flex-1 flex-col gap-y-1">
-            {globalNavigation.map((item) => {
-              const isActive = pathname === item.href || (pathname !== '/' && pathname?.startsWith(item.href))
-              return (
-                <li key={item.name}>
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      isActive
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                      "group flex gap-x-3 rounded-md p-2 text-sm font-medium leading-6 transition-all duration-200"
-                    )}
-                  >
-                    <item.icon
-                      className={cn(
-                        isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
-                        "h-5 w-5 shrink-0 transition-colors"
-                      )}
-                      aria-hidden="true"
-                    />
-                    {item.name}
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
-        )}
+
+          {isProjectContext && (
+            <>
+              <div>
+                <div className="text-xs font-semibold text-muted-foreground mb-2 px-2 uppercase tracking-wider flex items-center gap-2">
+                  Compute <div className="h-px bg-border flex-1 ml-2"></div>
+                </div>
+                <ul role="list" className="flex flex-col gap-y-1">
+                  {projectComputeNav.map((item) => {
+                    const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href)
+                    return (
+                      <li key={item.name}>
+                        <Link
+                          href={item.href}
+                          className={cn(
+                            isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                            "group flex gap-x-3 rounded-md p-2 text-sm font-medium leading-6 transition-all duration-200"
+                          )}
+                        >
+                          <item.icon className={cn(isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground", "h-4 w-4 shrink-0 transition-colors mt-1")} />
+                          {item.name}
+                        </Link>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+
+              <div>
+                <div className="text-xs font-semibold text-muted-foreground mb-2 px-2 uppercase tracking-wider flex items-center gap-2">
+                  Database <div className="h-px bg-border flex-1 ml-2"></div>
+                </div>
+                <ul role="list" className="flex flex-col gap-y-1">
+                  {projectDatabaseNav.map((item) => (
+                    <li key={item.name}>
+                      <Link href={item.href} className={cn(pathname.startsWith(item.href) ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground", "group flex gap-x-3 rounded-md p-2 text-sm font-medium leading-6 transition-all duration-200")}>
+                        <item.icon className={cn(pathname.startsWith(item.href) ? "text-primary" : "text-muted-foreground group-hover:text-foreground", "h-4 w-4 shrink-0 transition-colors mt-1")} />
+                        {item.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <div className="text-xs font-semibold text-muted-foreground mb-2 px-2 uppercase tracking-wider flex items-center gap-2">
+                  Storage <div className="h-px bg-border flex-1 ml-2"></div>
+                </div>
+                <ul role="list" className="flex flex-col gap-y-1">
+                  {projectStorageNav.map((item) => (
+                    <li key={item.name}>
+                      <Link href={item.href} className={cn(pathname.startsWith(item.href) ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground", "group flex gap-x-3 rounded-md p-2 text-sm font-medium leading-6 transition-all duration-200")}>
+                        <item.icon className={cn(pathname.startsWith(item.href) ? "text-primary" : "text-muted-foreground group-hover:text-foreground", "h-4 w-4 shrink-0 transition-colors mt-1")} />
+                        {item.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </>
+          )}
+        </div>
       </nav>
     </div>
   )
