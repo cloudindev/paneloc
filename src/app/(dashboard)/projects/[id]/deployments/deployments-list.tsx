@@ -119,10 +119,17 @@ export function DeploymentsList({ resource, initialDeployments, initialDebug }: 
                 {deployments.map((dep: any, idx: number) => (
                   <tr key={dep.uuid || dep.id || idx} className="hover:bg-muted/30 transition-colors cursor-pointer group" onClick={() => router.push(`/projects/${resource.id}/logs?deployment=${dep.uuid}`)}>
                     <td className="px-4 py-3">{getStatusBadge(dep.status)}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-foreground min-w-[200px]">
-                      <div className="flex items-center gap-1.5">
-                        <GitCommit className="h-3 w-3 text-muted-foreground" />
-                        {dep.commit ? dep.commit.substring(0, 7) : 'Manual'}
+                    <td className="px-4 py-3 min-w-[250px] max-w-[400px]">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
+                          <GitCommit className="h-3 w-3 shrink-0" />
+                          {dep.commit ? dep.commit.substring(0, 7) : 'Manual'}
+                        </div>
+                        {dep.commit_message && (
+                          <span className="text-sm text-foreground truncate" title={dep.commit_message}>
+                            {dep.commit_message}
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{formatTime(dep.created_at)}</td>
