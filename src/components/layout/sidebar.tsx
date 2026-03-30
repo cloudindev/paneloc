@@ -65,7 +65,7 @@ export function Sidebar({ projects = [] }: { projects?: any[] }) {
               WebkitMaskSize: 'contain',
               WebkitMaskRepeat: 'no-repeat',
               WebkitMaskPosition: 'center',
-              clipPath: 'polygon(36% 0%, 100% 0%, 100% 100%, 39.5% 100%)'
+              clipPath: 'polygon(34.5% 0%, 100% 0%, 100% 100%, 39.5% 100%)'
             }}
           />
         </Link>
