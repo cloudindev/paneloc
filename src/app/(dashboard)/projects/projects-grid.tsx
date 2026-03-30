@@ -195,12 +195,25 @@ export function ProjectsGrid({ initialProjects }: { initialProjects: any[] }) {
             </Card>
           )
         })}
-        {filtered.length === 0 && (
-           <div className="col-span-full py-12 text-center border rounded-xl bg-card/20 border-dashed">
-            <h3 className="text-lg font-medium text-foreground mb-1">No hay proyectos</h3>
-            <p className="text-sm text-muted-foreground mb-4">Empieza desplegando tu primera aplicación desde GitHub o usa otra palabra clave de búsqueda.</p>
+        {projects.length === 0 ? (
+           <div className="col-span-full py-20 text-center border rounded-xl bg-card/20 border-dashed flex flex-col items-center justify-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20 mb-4">
+              <Globe2 className="h-6 w-6 text-primary" />
+            </div>
+            <h3 className="text-xl font-medium text-foreground mb-2">Aún no tienes ningún proyecto</h3>
+            <p className="text-sm text-muted-foreground max-w-sm mb-6">
+              Despliega tu primera aplicación en OLA CLOUD en pocos segundos en formato Docker, Node o Next.js
+            </p>
+            <Button asChild>
+              <Link href="/projects/new">Crear mi primer Proyecto</Link>
+            </Button>
            </div>
-        )}
+        ) : filtered.length === 0 ? (
+           <div className="col-span-full py-12 text-center border rounded-xl bg-card/20 border-dashed border-muted">
+            <h3 className="text-lg font-medium text-foreground mb-1">No hay resultados</h3>
+            <p className="text-sm text-muted-foreground">No se ha encontrado ninguna aplicación que coincida con tu búsqueda.</p>
+           </div>
+        ) : null}
       </div>
     </div>
   )
