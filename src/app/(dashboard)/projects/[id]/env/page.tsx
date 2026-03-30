@@ -17,7 +17,7 @@ import { getAppEnvVars, createAppEnvVar, updateAppEnvVar, deleteAppEnvVar } from
 export default function ProjectEnvVarsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: resourceId } = React.use(params)
   
-  const [showValues, setShowValues] = React.useState(false)
+  const [visibleValues, setVisibleValues] = React.useState<Set<string>>(new Set())
   const [envVars, setEnvVars] = React.useState<any[]>([])
   const [loading, setLoading] = React.useState(true)
   const [search, setSearch] = React.useState("")
@@ -110,14 +110,6 @@ export default function ProjectEnvVarsPage({ params }: { params: Promise<{ id: s
           </p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            className="shrink-0 gap-2"
-            onClick={() => setShowValues(!showValues)}
-          >
-            {showValues ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            {showValues ? "Ocultar Valores" : "Mostrar Valores"}
-          </Button>
           <Button onClick={handleOpenAdd} className="shrink-0 gap-2">
             <Plus className="h-4 w-4" />
             Añadir Variable
@@ -174,11 +166,24 @@ export default function ProjectEnvVarsPage({ params }: { params: Promise<{ id: s
                     </div>
                   </TableCell>
                   <TableCell className="font-mono text-muted-foreground">
-                    {showValues ? (
-                      envVar.value
-                    ) : (
-                      <span className="text-zinc-500">••••••••••••••••</span>
-                    )}
+                    <div className="flex items-center gap-3">
+                      {visibleValues.has(envVar.uuid) ? (
+                        <span className="break-all">{envVar.value}</span>
+                      ) : (
+                        <span className="text-zinc-500 tracking-widest relative top-[1px]">••••••••••••••••</span>
+                      )}
+                      <button 
+                        onClick={() => {
+                          const next = new Set(visibleValues)
+                          if (next.has(envVar.uuid)) next.delete(envVar.uuid)
+                          else next.add(envVar.uuid)
+                          setVisibleValues(next)
+                        }}
+                        className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                      >
+                        {visibleValues.has(envVar.uuid) ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                   </TableCell>
                   <TableCell>
                     <span className="text-sm text-foreground/80 capitalize">
