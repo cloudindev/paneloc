@@ -47,7 +47,7 @@ export default function LoginPage() {
               WebkitMaskSize: 'contain',
               WebkitMaskRepeat: 'no-repeat',
               WebkitMaskPosition: 'center',
-              clipPath: 'polygon(33.5% 0%, 100% 0%, 100% 100%, 37% 100%)'
+              clipPath: 'polygon(41% 0%, 100% 0%, 100% 100%, 44% 100%)'
             }}
           />
         </Link>
