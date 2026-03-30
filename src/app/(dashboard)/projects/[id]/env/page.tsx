@@ -29,6 +29,7 @@ export default function ProjectEnvVarsPage({ params }: { params: Promise<{ id: s
   const [formValue, setFormValue] = React.useState("")
   const [formIsSecret, setFormIsSecret] = React.useState(false)
   const [formSaving, setFormSaving] = React.useState(false)
+  const [showFormValue, setShowFormValue] = React.useState(false)
 
   const [deletingId, setDeletingId] = React.useState<string | null>(null)
 
@@ -240,13 +241,23 @@ export default function ProjectEnvVarsPage({ params }: { params: Promise<{ id: s
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Valor</label>
-                <Input 
-                  placeholder="https://api.dominio.com" 
-                  value={formValue} 
-                  onChange={e => setFormValue(e.target.value)} 
-                  className="font-mono bg-background/50"
-                  spellCheck={false}
-                />
+                <div className="relative">
+                  <Input 
+                    type={showFormValue ? "text" : "password"}
+                    placeholder="https://api.dominio.com" 
+                    value={formValue} 
+                    onChange={e => setFormValue(e.target.value)} 
+                    className="font-mono bg-background/50 pr-10"
+                    spellCheck={false}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowFormValue(!showFormValue)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showFormValue ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
               <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/20">
                 <div className="space-y-0.5">
