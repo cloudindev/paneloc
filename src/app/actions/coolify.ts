@@ -62,6 +62,9 @@ export async function coolifyFetch(method: string, endpoint: string, body?: any)
     }
     const tokenInfo = apiToken ? `${apiToken.substring(0, 3)}... (Len: ${apiToken.length})` : "EMPTY"
     errorMessage += ` | Debug: ${apiUrl}${endpoint} | Token: ${tokenInfo}`
+    if (body) {
+      errorMessage += ` | RequestPayload: ${JSON.stringify(body)}`
+    }
     
     console.error(`Coolify API Error (${res.status} ${endpoint}):`, errorMessage)
     throw new Error(`Coolify Error: ${res.status} - ${errorMessage}`)
