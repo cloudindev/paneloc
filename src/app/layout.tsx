@@ -8,9 +8,6 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 export const metadata: Metadata = {
   title: "OLA CLOUD | Premium Cloud Platform",
   description: "Manage your Next.js, Node.js, Python, and Docker apps with ease on our premium infrastructure.",
-  icons: {
-    icon: "/favicon.png",
-  },
 };
 
 export default function RootLayout({
