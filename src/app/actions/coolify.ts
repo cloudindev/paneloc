@@ -143,8 +143,10 @@ export async function deployToCoolify(params: {
     const baseDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || "apps.olacloud.es"
     const customFqdn = `https://${slugifiedName}.${baseDomain}`
 
-    // Coolify v4 strict regex in POST /applications/public explicitly rejects '@' and ':' in git_repository.
-    // So we MUST create the app with a clean URL, and then update it with the PAT via PATCH API safely!
+    // Coolify v4's backend for POST /applications/public rigidly hardcodes 'https://github.com/' 
+    // before the repository URL (e.g., $url = "https://github.com/" . $git_repository).
+    // This makes it physically impossible to inject Basic Auth credentials (like a PAT) 
+    // because the URL schema requires the credentials before the hostname (https://user:pass@github.com).
     let gitRepositoryUrlClean = `https://github.com/${params.repoFullName}.git`
 
     const appPayload = {
@@ -165,16 +167,12 @@ export async function deployToCoolify(params: {
       throw new Error("La API de Coolify no devolvió un UUID para la aplicación creada.")
     }
 
-    // 2.B Inyectar la URL con el Token (Private) y el FQDN mediante un update al recurso tras su creación
-    // Esto puentea el rechazo inicial del regex y engrasa el despliegue con auth para repos privados!
+    // 2.B Inyectar el FQDN mediante un update al recurso tras su creación
     try {
       let patchPayload: any = { domains: customFqdn }
-      if (params.isPrivate && params.pat) {
-         patchPayload.git_repository = `https://git:${params.pat}@github.com/${params.repoFullName}.git`
-      }
       await coolifyFetch("PATCH", `/applications/${appUuid}`, patchPayload)
     } catch (e: any) {
-      console.warn("Aviso: el update del dominio o inyección remota de PAT falló. El despliegue fallará en repositorios privados si Coolify rechaza el PATCH.", e.message)
+      console.warn("Aviso: el update del dominio falló.", e.message)
     }
 
     // 3. Registrar el recurso en nuestra base de datos atado a este cliente
