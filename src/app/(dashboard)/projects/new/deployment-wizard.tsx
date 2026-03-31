@@ -168,8 +168,8 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
                 value={selectedRepo ? selectedRepo.name.toLowerCase() : ""}
                 readOnly
               />
-              <p className="text-xs text-muted-foreground">
-                Se usará para generar el subdominio gratuito inicial.
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Se usará para generar el subdominio inicial. Podrás personalizar tu dominio más adelante.
               </p>
             </div>
 
@@ -181,7 +181,7 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
                 <div className="flex cursor-pointer items-center rounded-lg border border-primary bg-primary/10 p-4 transition-colors">
                   <Server className="h-5 w-5 text-primary mr-3" />
                   <div>
-                    <p className="font-medium">VM102 (Producción)</p>
+                    <p className="font-medium">VM (Producción)</p>
                     <p className="text-xs text-muted-foreground">Edge Router Activo</p>
                   </div>
                 </div>
@@ -269,22 +269,28 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
         <Card className="bg-card/40 border-border/50 shadow-sm">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <CardTitle className="text-base font-semibold">Cost estimate</CardTitle>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              eu-north1 <span className="text-xl leading-none" title="Finland">🇫🇮</span>
-            </div>
           </CardHeader>
           <CardContent className="space-y-4 text-[0.85rem]">
-            <div className="flex justify-between items-center text-muted-foreground">
-              <span>Non-GPU AMD Epyc. CPU: <span className="text-foreground font-medium">8 vCPU</span></span>
-              <span className="font-bold text-foreground">$0.1/hour</span>
+            <div className="flex justify-between items-start gap-4">
+              <div className="flex flex-col">
+                <span className="text-xs text-muted-foreground/80">AMD Epyc Non-GPU</span>
+                <span className="text-foreground font-medium mt-0.5">CPU: 8 vCPU</span>
+              </div>
+              <span className="font-bold text-foreground shrink-0 mt-0.5 pt-4">$0.1/hour</span>
             </div>
-            <div className="flex justify-between items-center text-muted-foreground">
-              <span>Non-GPU AMD Epyc. RAM: <span className="text-foreground font-medium">32 GiB</span></span>
-              <span className="font-bold text-foreground">$0.11/hour</span>
+            <div className="flex justify-between items-start gap-4">
+              <div className="flex flex-col">
+                <span className="text-xs text-muted-foreground/80">AMD Epyc Non-GPU</span>
+                <span className="text-foreground font-medium mt-0.5">RAM: 48 GiB</span>
+              </div>
+              <span className="font-bold text-foreground shrink-0 mt-0.5 pt-4">$0.11/hour</span>
             </div>
-            <div className="flex justify-between items-center text-muted-foreground">
-              <span>Network SSD disk: <span className="text-foreground font-medium">1280 GiB</span></span>
-              <span className="font-bold text-foreground">$0.13/hour</span>
+            <div className="flex justify-between items-start gap-4">
+              <div className="flex flex-col">
+                <span className="text-xs text-muted-foreground/80">Network SSD Disk</span>
+                <span className="text-foreground font-medium mt-0.5">1280 GiB</span>
+              </div>
+              <span className="font-bold text-foreground shrink-0 mt-0.5 pt-4">$0.13/hour</span>
             </div>
           </CardContent>
         </Card>
