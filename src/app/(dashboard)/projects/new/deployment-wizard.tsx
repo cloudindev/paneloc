@@ -224,23 +224,21 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
       </div>
 
       {/* Right Col - Summary */}
-      <div className="space-y-6">
-        <Card className="sticky top-24 border-primary/20 bg-card/60 shadow-lg shadow-primary/5">
+      <div className="space-y-6 lg:sticky lg:top-8 self-start">
+        <Card className="border-primary/20 bg-card/60 shadow-lg shadow-primary/5">
           <CardHeader>
-            <CardTitle className="text-lg">Resumen de Despliegue</CardTitle>
+            <CardTitle className="text-lg">Despliegue Virtual Machine</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
-            <div className="flex justify-between border-b border-border/50 pb-2">
-              <span className="text-muted-foreground">Infraestructura</span>
-              <span className="font-medium flex items-center gap-1"><Server className="w-3 h-3"/> VM102</span>
+            <div className="flex justify-between border-b border-border/50 pb-2 items-center">
+              <span className="font-medium flex items-center gap-2 text-foreground">
+                <Server className="w-4 h-4 text-primary"/> VM
+              </span>
+              <span className="font-semibold text-sm">AMD EPYC non GPU</span>
             </div>
-            <div className="flex justify-between border-b border-border/50 pb-2">
-              <span className="text-muted-foreground">Directorio</span>
-              <span className="font-medium">/</span>
-            </div>
-            <div className="flex justify-between border-b border-border/50 pb-2">
+            <div className="flex justify-between border-b border-border/50 pb-2 items-center">
               <span className="text-muted-foreground">Rama Auto-Deploy</span>
-              <span className="font-medium flex items-center gap-1 truncate w-32 justify-end">
+              <span className="font-medium flex items-center gap-1">
                 <GitBranch className="w-3 h-3 shrink-0"/> {selectedRepo ? selectedRepo.defaultBranch : "main"}
               </span>
             </div>
@@ -265,6 +263,30 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
               )}
             </Button>
           </CardFooter>
+        </Card>
+
+        {/* Cost Estimates */}
+        <Card className="bg-card/40 border-border/50 shadow-sm">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="text-base font-semibold">Cost estimate</CardTitle>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              eu-north1 <span className="text-xl leading-none" title="Finland">🇫🇮</span>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4 text-[0.85rem]">
+            <div className="flex justify-between items-center text-muted-foreground">
+              <span>Non-GPU AMD Epyc. CPU: <span className="text-foreground font-medium">8 vCPU</span></span>
+              <span className="font-bold text-foreground">$0.1/hour</span>
+            </div>
+            <div className="flex justify-between items-center text-muted-foreground">
+              <span>Non-GPU AMD Epyc. RAM: <span className="text-foreground font-medium">32 GiB</span></span>
+              <span className="font-bold text-foreground">$0.11/hour</span>
+            </div>
+            <div className="flex justify-between items-center text-muted-foreground">
+              <span>Network SSD disk: <span className="text-foreground font-medium">1280 GiB</span></span>
+              <span className="font-bold text-foreground">$0.13/hour</span>
+            </div>
+          </CardContent>
         </Card>
       </div>
     </div>
