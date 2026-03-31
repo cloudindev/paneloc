@@ -11,15 +11,61 @@ const stripAnsi = (str: string) => {
   return str.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '')
 }
 
+type LogLine = {
+  timestamp?: string;
+  output: string;
+  type?: 'stdout' | 'stderr';
+}
+
+const parseCoolifyLogs = (rawLogs: any): LogLine[] => {
+  if (!rawLogs) return [{ output: "Esperando logs del contenedor...", type: "stdout" }]
+  
+  let logsArray: any[] = []
+  if (typeof rawLogs === 'string') {
+    try {
+      if (rawLogs.trim().startsWith('[')) {
+        logsArray = JSON.parse(rawLogs)
+      } else {
+        return [{ output: stripAnsi(rawLogs), type: "stdout" }]
+      }
+    } catch (e) {
+      return [{ output: stripAnsi(rawLogs), type: "stdout" }]
+    }
+  } else if (Array.isArray(rawLogs)) {
+    logsArray = rawLogs
+  } else {
+    return [{ output: "Formato de logs desconocido.", type: "stdout" }]
+  }
+
+  return logsArray.map(line => ({
+    timestamp: line.timestamp,
+    type: line.type === 'stderr' || line.stderr ? 'stderr' : 'stdout',
+    output: stripAnsi(line.output || "")
+  }))
+}
+
+const formatTimestamp = (ts: string) => {
+  // Ej. 2026-03-31T19:49:01.681164Z -> 2026-Mar-31 19:49:01.681164
+  try {
+    const d = new Date(ts)
+    if (isNaN(d.getTime())) return ts.replace('T', ' ').replace('Z', '')
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    const ms = ts.includes('.') ? '.' + ts.split('.')[1].replace('Z', '') : ''
+    return `${d.getFullYear()}-${months[d.getMonth()]}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}${ms}`
+  } catch (e) {
+    return ts
+  }
+}
+
 export function LogsTerminal({ resource, initialDeploymentUuid }: { resource: any, initialDeploymentUuid?: string }) {
-  const [logs, setLogs] = React.useState<string>("Inicializando socket virtual...")
+  const [logs, setLogs] = React.useState<LogLine[]>([{ output: "Inicializando socket virtual...", type: "stdout" }])
   const [status, setStatus] = React.useState<string>("loading")
   const [autoScroll, setAutoScroll] = React.useState<boolean>(true)
   const preRef = React.useRef<HTMLPreElement>(null)
 
   React.useEffect(() => {
     if (!initialDeploymentUuid) {
-      setLogs("No hay despliegues registrados para este proyecto. Despliega la aplicación primero para obtener logs de compilación.")
+      setLogs([{ output: "No hay despliegues registrados para este proyecto. Despliega la aplicación primero para obtener logs de compilación.", type: "stderr" }])
       setStatus("unknown")
       return
     }
@@ -29,7 +75,7 @@ export function LogsTerminal({ resource, initialDeploymentUuid }: { resource: an
     const fetchLogs = async () => {
       const res = await getDeploymentTaskLogs(initialDeploymentUuid)
       if (res.success) {
-        setLogs(stripAnsi(res.logs || "Esperando logs del contenedor..."))
+        setLogs(parseCoolifyLogs(res.logs))
         setStatus(res.status)
 
         // Detener web-polling si alcanzó estado terminal (minimiza estrés de API)
@@ -37,7 +83,7 @@ export function LogsTerminal({ resource, initialDeploymentUuid }: { resource: an
           clearInterval(intervalId)
         }
       } else {
-        setLogs((prev) => prev + `\n\n[SISTEMA] Conexión interrumpida con el backend de contenedores: ${res.error}`)
+        setLogs((prev) => [...prev, { output: `[SISTEMA] Conexión interrumpida con el backend de contenedores: ${res.error}`, type: "stderr" }])
         setStatus("error")
         clearInterval(intervalId)
       }
@@ -99,7 +145,12 @@ export function LogsTerminal({ resource, initialDeploymentUuid }: { resource: an
           className="h-full w-full overflow-y-auto p-6 text-[13px] font-mono text-zinc-300 leading-relaxed break-words whitespace-pre-wrap select-text focus:outline-none"
           style={{ scrollbarWidth: "thin", scrollbarColor: "#3f3f46 #0c0c0c" }}
         >
-          {logs}
+          {logs.map((line, idx) => (
+            <div key={idx} className={`whitespace-pre-wrap flex items-start ${line.type === 'stderr' ? 'text-red-400' : 'text-zinc-300'}`}>
+              {line.timestamp && <span className="text-zinc-500 mr-4 select-none shrink-0">{formatTimestamp(line.timestamp)}</span>}
+              <span className="flex-1 break-words">{line.output}</span>
+            </div>
+          ))}
         </pre>
       </CardContent>
     </Card>
