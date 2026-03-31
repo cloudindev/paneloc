@@ -143,24 +143,34 @@ export async function deployToCoolify(params: {
     const baseDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || "apps.olacloud.es"
     const customFqdn = `https://${slugifiedName}.${baseDomain}`
 
-    // Coolify v4's backend for POST /applications/public rigidly hardcodes 'https://github.com/' 
-    // before the repository URL (e.g., $url = "https://github.com/" . $git_repository).
-    // This makes it physically impossible to inject Basic Auth credentials (like a PAT) 
-    // because the URL schema requires the credentials before the hostname (https://user:pass@github.com).
     let gitRepositoryUrlClean = `https://github.com/${params.repoFullName}.git`
 
-    const appPayload = {
+    let appPayload: any = {
       project_uuid: targetProjectUuid,
       environment_name: "production",
       server_uuid: COOLIFY_SERVER_UUID,
-      git_repository: gitRepositoryUrlClean,
       git_branch: params.branch,
       build_pack: "nixpacks", // framework string (nextjs, nodejs, etc) lo usa Nixpacks internamente de todas formas.
       ports_exposes: "3000",
       name: params.projectName,
     }
 
-    const appCreated = await coolifyFetch("POST", "/applications/public", appPayload)
+    let endpoint = "/applications/public"
+
+    if (params.isPrivate) {
+      const githubAppUuid = process.env.COOLIFY_GITHUB_APP_UUID
+      if (!githubAppUuid) {
+        throw new Error("COOLIFY_GITHUB_APP_UUID no configurado. Requerido para repositorios privados.")
+      }
+      endpoint = "/applications/private-github-app"
+      appPayload.github_app_uuid = githubAppUuid
+      // Para la app privada nativa Coolify suele esperar owner/repo
+      appPayload.git_repository = params.repoFullName
+    } else {
+      appPayload.git_repository = gitRepositoryUrlClean
+    }
+
+    const appCreated = await coolifyFetch("POST", endpoint, appPayload)
     const appUuid = appCreated.uuid
 
     if (!appUuid) {

@@ -14,7 +14,6 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
   const [isDisconnecting, setIsDisconnecting] = React.useState(false)
   const [search, setSearch] = React.useState("")
   const [selectedRepo, setSelectedRepo] = React.useState<any | null>(null)
-  const [pat, setPat] = React.useState("")
 
   const filteredRepos = repositories.filter(repo => 
     repo.fullName.toLowerCase().includes(search.toLowerCase()) ||
@@ -30,8 +29,7 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
       branch: selectedRepo.defaultBranch || "main",
       projectName: selectedRepo.name.toLowerCase(),
       framework: framework,
-      isPrivate: selectedRepo.private,
-      pat: pat
+      isPrivate: selectedRepo.private
     })
 
     if (res.success) {
@@ -177,21 +175,17 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
 
             {selectedRepo?.private && (
               <div className="space-y-2 pt-2 border-t border-border/50 mt-4 pt-4">
-                <label className="text-sm font-medium leading-none flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-emerald-500" />
-                  GitHub Personal Access Token (PAT)
-                </label>
-                <Input 
-                  type="password"
-                  placeholder="github_pat_*****" 
-                  className="bg-background/50 font-mono text-sm" 
-                  value={pat}
-                  onChange={(e) => setPat(e.target.value)}
-                  required
-                />
-                <p className="text-xs text-muted-foreground mt-1.5">
-                  Requerido para clonar repositorios privados de forma segura. Genera un token clásico en GitHub con permiso <code className="bg-muted px-1 rounded">repo</code>.
-                </p>
+                <div className="flex bg-blue-500/10 border border-blue-500/30 p-4 rounded-xl items-start gap-4">
+                  <div className="bg-blue-500/20 p-2 rounded-lg mt-0.5">
+                    <Lock className="h-4 w-4 text-blue-400" />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <h3 className="text-sm font-medium text-blue-400">Despliegue Privado Automatizado</h3>
+                    <p className="text-xs text-muted-foreground/80 leading-relaxed">
+                      Este repositorio está protegido. Se utilizará la autenticación nativa de la <strong>Instalación OLA Cloud</strong> en GitHub para asegurar una comunicación sin contraseñas con el servidor y realizar rotación automática de permisos a la hora de compilar.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -270,7 +264,7 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
               className="w-full text-primary-foreground font-semibold" 
               size="lg"
               onClick={deploy}
-              disabled={!selectedRepo || isDeploying || (selectedRepo?.private && !pat)}
+              disabled={!selectedRepo || isDeploying}
             >
               {isDeploying ? (
                 <span className="flex items-center gap-2">
