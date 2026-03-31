@@ -21,16 +21,30 @@ export async function coolifyFetch(method: string, endpoint: string, body?: any)
 
   if (!apiToken) throw new Error("COOLIFY_API_TOKEN no configurado en entorno.")
   
-  const res = await fetch(`${apiUrl}${endpoint}`, {
-    method,
-    headers: {
-      "Authorization": `Bearer ${apiToken}`,
-      "Content-Type": "application/json",
-      "Accept": "application/json"
-    },
-    body: body ? JSON.stringify(body) : undefined,
-    cache: "no-store", // <--- EVITA AGGRESSIVE CACHING DE NEXT 14
-  })
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 12000)
+
+  let res;
+  try {
+    res = await fetch(`${apiUrl}${endpoint}`, {
+      method,
+      headers: {
+        "Authorization": `Bearer ${apiToken}`,
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: body ? JSON.stringify(body) : undefined,
+      cache: "no-store", 
+      signal: controller.signal
+    })
+  } catch (error: any) {
+    if (error.name === 'AbortError' || error.message.includes('abort')) {
+       throw new Error(`Timeout de 12s excedido al contactar con la API de Coolify en ${endpoint}. El servidor de destino puede estar colapsado o bloqueado en una validación síncrona (ej. credenciales inválidas para git).`)
+    }
+    throw error
+  } finally {
+    clearTimeout(timeoutId)
+  }
 
   if (!res.ok) {
     let errorMessage = res.statusText
@@ -132,7 +146,8 @@ export async function deployToCoolify(params: {
     let gitRepositoryUrl = `https://github.com/${params.repoFullName}`
     if (params.isPrivate && params.pat) {
        // Interpolate PAT into URL for GitHub clone over HTTPS for private repos
-       gitRepositoryUrl = `https://x-access-token:${params.pat}@github.com/${params.repoFullName}.git`
+       // Some servers block 'x-access-token', 'git' username is universally accepted by GitHub
+       gitRepositoryUrl = `https://git:${params.pat}@github.com/${params.repoFullName}.git`
     }
 
     const appPayload = {
