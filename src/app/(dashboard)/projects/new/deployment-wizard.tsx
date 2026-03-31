@@ -287,8 +287,8 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
             </div>
             <div className="flex justify-between items-start gap-4">
               <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground/80">Network SSD Disk</span>
-                <span className="text-foreground font-medium mt-0.5">1280 GiB</span>
+                <span className="text-xs text-muted-foreground/80">NVMe Disk</span>
+                <span className="text-foreground font-medium mt-0.5">50GB</span>
               </div>
               <span className="font-bold text-foreground shrink-0 mt-0.5 pt-4">$0.13/hour</span>
             </div>
