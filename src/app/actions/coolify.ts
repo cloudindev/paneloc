@@ -143,18 +143,15 @@ export async function deployToCoolify(params: {
     const baseDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || "apps.olacloud.es"
     const customFqdn = `https://${slugifiedName}.${baseDomain}`
 
-    let gitRepositoryUrl = `https://github.com/${params.repoFullName}`
-    if (params.isPrivate && params.pat) {
-       // Interpolate PAT into URL for GitHub clone over HTTPS for private repos
-       // Some servers block 'x-access-token', 'git' username is universally accepted by GitHub
-       gitRepositoryUrl = `https://git:${params.pat}@github.com/${params.repoFullName}.git`
-    }
+    // Coolify v4 strict regex in POST /applications/public explicitly rejects '@' and ':' in git_repository.
+    // So we MUST create the app with a clean URL, and then update it with the PAT via PATCH API safely!
+    let gitRepositoryUrlClean = `https://github.com/${params.repoFullName}.git`
 
     const appPayload = {
       project_uuid: targetProjectUuid,
       environment_name: "production",
       server_uuid: COOLIFY_SERVER_UUID,
-      git_repository: gitRepositoryUrl,
+      git_repository: gitRepositoryUrlClean,
       git_branch: params.branch,
       build_pack: "nixpacks", // framework string (nextjs, nodejs, etc) lo usa Nixpacks internamente de todas formas.
       ports_exposes: "3000",
@@ -168,11 +165,16 @@ export async function deployToCoolify(params: {
       throw new Error("La API de Coolify no devolvió un UUID para la aplicación creada.")
     }
 
-    // 2.B Inyectar el FQDN generado mediante un update al recurso tras su creación
+    // 2.B Inyectar la URL con el Token (Private) y el FQDN mediante un update al recurso tras su creación
+    // Esto puentea el rechazo inicial del regex y engrasa el despliegue con auth para repos privados!
     try {
-      await coolifyFetch("PATCH", `/applications/${appUuid}`, { domains: customFqdn })
+      let patchPayload: any = { domains: customFqdn }
+      if (params.isPrivate && params.pat) {
+         patchPayload.git_repository = `https://git:${params.pat}@github.com/${params.repoFullName}.git`
+      }
+      await coolifyFetch("PATCH", `/applications/${appUuid}`, patchPayload)
     } catch (e: any) {
-      console.warn("Aviso: el update de FQDN falló", e.message)
+      console.warn("Aviso: el update del dominio o inyección remota de PAT falló. El despliegue fallará en repositorios privados si Coolify rechaza el PATCH.", e.message)
     }
 
     // 3. Registrar el recurso en nuestra base de datos atado a este cliente
