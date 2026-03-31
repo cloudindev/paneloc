@@ -153,6 +153,7 @@ export async function deployToCoolify(params: {
       build_pack: "nixpacks", // framework string (nextjs, nodejs, etc) lo usa Nixpacks internamente de todas formas.
       ports_exposes: "3000",
       name: params.projectName,
+      git_repository: gitRepositoryUrlClean
     }
 
     let endpoint = "/applications/public"
@@ -164,10 +165,6 @@ export async function deployToCoolify(params: {
       }
       endpoint = "/applications/private-github-app"
       appPayload.github_app_uuid = githubAppUuid
-      // Para la app privada nativa Coolify suele esperar owner/repo
-      appPayload.git_repository = params.repoFullName
-    } else {
-      appPayload.git_repository = gitRepositoryUrlClean
     }
 
     const appCreated = await coolifyFetch("POST", endpoint, appPayload)
