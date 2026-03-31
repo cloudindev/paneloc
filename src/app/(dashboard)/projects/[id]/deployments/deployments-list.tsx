@@ -42,11 +42,11 @@ export function DeploymentsList({ resource, initialDeployments, initialDebug }: 
     if (res.success) {
       // Refresh list immediately
       const listRes = await getApplicationDeployments(config.coolify_uuid)
-      if (listRes.success) {
+      if (listRes.success && listRes.deployments.length > 0) {
         setDeployments(listRes.deployments)
       } else {
         // Fallback optimista
-        setDeployments([{ uuid: 'temp', status: 'queued', created_at: new Date().toISOString() }, ...deployments])
+        setDeployments([{ deployment_uuid: 'temp', status: 'queued', created_at: new Date().toISOString() }, ...deployments])
       }
     } else {
       alert(`Error al desencadenar el despliegue: ${res.error}`)
@@ -117,7 +117,7 @@ export function DeploymentsList({ resource, initialDeployments, initialDebug }: 
               </thead>
               <tbody className="divide-y divide-border/50">
                 {deployments.map((dep: any, idx: number) => (
-                  <tr key={dep.uuid || dep.id || idx} className="hover:bg-muted/30 transition-colors cursor-pointer group" onClick={() => router.push(`/projects/${resource.id}/logs?deployment=${dep.uuid}`)}>
+                  <tr key={dep.deployment_uuid || dep.uuid || dep.id || idx} className="hover:bg-muted/30 transition-colors cursor-pointer group" onClick={() => router.push(`/projects/${resource.id}/logs?deployment=${dep.deployment_uuid || dep.uuid}`)}>
                     <td className="px-4 py-3">{getStatusBadge(dep.status)}</td>
                     <td className="px-4 py-3 min-w-[250px] max-w-[400px]">
                       <div className="flex flex-col gap-1">

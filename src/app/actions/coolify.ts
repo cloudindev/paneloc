@@ -67,6 +67,7 @@ export async function deployToCoolify(params: {
   projectName: string;
   framework: string;
   isPrivate: boolean;
+  pat?: string;
 }) {
   try {
     const cookieStore = await cookies()
@@ -128,11 +129,17 @@ export async function deployToCoolify(params: {
     const baseDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || "apps.olacloud.es"
     const customFqdn = `https://${slugifiedName}.${baseDomain}`
 
+    let gitRepositoryUrl = `https://github.com/${params.repoFullName}`
+    if (params.isPrivate && params.pat) {
+       // Interpolate PAT into URL for GitHub clone over HTTPS for private repos
+       gitRepositoryUrl = `https://x-access-token:${params.pat}@github.com/${params.repoFullName}.git`
+    }
+
     const appPayload = {
       project_uuid: targetProjectUuid,
       environment_name: "production",
       server_uuid: COOLIFY_SERVER_UUID,
-      git_repository: `https://github.com/${params.repoFullName}`,
+      git_repository: gitRepositoryUrl,
       git_branch: params.branch,
       build_pack: "nixpacks", // framework string (nextjs, nodejs, etc) lo usa Nixpacks internamente de todas formas.
       ports_exposes: "3000",

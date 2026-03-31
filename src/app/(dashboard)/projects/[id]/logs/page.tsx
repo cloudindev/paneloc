@@ -23,7 +23,7 @@ export default async function LogsPage({ params, searchParams }: { params: Promi
   if (!deploymentUuid && coolifyUuid) {
      const resDeploys = await getApplicationDeployments(coolifyUuid)
      if (resDeploys.success && resDeploys.deployments.length > 0) {
-        deploymentUuid = resDeploys.deployments[0].uuid || resDeploys.deployments[0].id
+        deploymentUuid = resDeploys.deployments[0].deployment_uuid || resDeploys.deployments[0].uuid || resDeploys.deployments[0].id
      }
   }
 

@@ -14,6 +14,7 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
   const [isDisconnecting, setIsDisconnecting] = React.useState(false)
   const [search, setSearch] = React.useState("")
   const [selectedRepo, setSelectedRepo] = React.useState<any | null>(null)
+  const [pat, setPat] = React.useState("")
 
   const filteredRepos = repositories.filter(repo => 
     repo.fullName.toLowerCase().includes(search.toLowerCase()) ||
@@ -29,7 +30,8 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
       branch: selectedRepo.defaultBranch || "main",
       projectName: selectedRepo.name.toLowerCase(),
       framework: framework,
-      isPrivate: selectedRepo.private
+      isPrivate: selectedRepo.private,
+      pat: pat
     })
 
     if (res.success) {
@@ -173,6 +175,26 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
               </p>
             </div>
 
+            {selectedRepo?.private && (
+              <div className="space-y-2 pt-2 border-t border-border/50 mt-4 pt-4">
+                <label className="text-sm font-medium leading-none flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-emerald-500" />
+                  GitHub Personal Access Token (PAT)
+                </label>
+                <Input 
+                  type="password"
+                  placeholder="ghp_************************" 
+                  className="bg-background/50 font-mono text-sm" 
+                  value={pat}
+                  onChange={(e) => setPat(e.target.value)}
+                  required
+                />
+                <p className="text-xs text-muted-foreground mt-1.5">
+                  Requerido para clonar repositorios privados de forma segura. Genera un token clásico en GitHub con permiso <code className="bg-muted px-1 rounded">repo</code>.
+                </p>
+              </div>
+            )}
+
             <div className="space-y-3 pt-4">
               <label className="text-sm font-medium leading-none">
                 Entorno Destino (Docker Node)
@@ -248,7 +270,7 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
               className="w-full text-primary-foreground font-semibold" 
               size="lg"
               onClick={deploy}
-              disabled={!selectedRepo || isDeploying}
+              disabled={!selectedRepo || isDeploying || (selectedRepo?.private && !pat)}
             >
               {isDeploying ? (
                 <span className="flex items-center gap-2">
