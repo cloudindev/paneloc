@@ -183,7 +183,7 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
                 </label>
                 <Input 
                   type="password"
-                  placeholder="ghp_************************" 
+                  placeholder="github_pat_*****" 
                   className="bg-background/50 font-mono text-sm" 
                   value={pat}
                   onChange={(e) => setPat(e.target.value)}
