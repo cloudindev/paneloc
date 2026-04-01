@@ -174,7 +174,21 @@ export async function deployToCoolify(params: {
 
       // Add Deploy Key to GitHub and post it to Coolify
       const { addDeployKeyToGithubRepo } = await import("./github-deploy-key")
-      const { privateKey } = await addDeployKeyToGithubRepo(org.githubInstallationId, params.repoFullName)
+      let privateKey: string;
+      try {
+        const result = await addDeployKeyToGithubRepo(org.githubInstallationId, params.repoFullName)
+        privateKey = result.privateKey;
+      } catch (err: any) {
+        if (err.message?.includes("Not Found") || err.message?.includes("create-an-installation-access-token")) {
+           // Auto-limpieza del ID fantasma
+           await prisma.organization.update({
+             where: { id: org.id },
+             data: { githubInstallationId: null }
+           });
+           throw new Error("Faltan permisos 500 private-github-app OLA Cloud: La conexión con GitHub fue revocada. Vuelve a dar permisos.")
+        }
+        throw err;
+      }
 
       // Store private key in Coolify
       const keyPayload = {
