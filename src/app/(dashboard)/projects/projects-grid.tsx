@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { createPortal } from "react-dom"
 import { deleteProjectAction } from "@/app/actions/projects"
 import { Search, Globe2, Server, TerminalSquare, RotateCcw, Play, Square, MoreVertical, GitBranch, Trash2, Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
@@ -56,8 +57,8 @@ function ActionMenu({ project, onDelete }: { project: any, onDelete: (id: string
         )}
       </div>
 
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in duration-200 p-4">
+      {showDeleteModal && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in duration-200 p-4">
           <div className="w-full max-w-md overflow-hidden rounded-2xl border border-destructive/20 bg-card shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="p-6 space-y-4">
               <div className="flex items-center gap-4">
@@ -94,7 +95,8 @@ function ActionMenu({ project, onDelete }: { project: any, onDelete: (id: string
               </Button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   )
@@ -193,8 +195,8 @@ export function ProjectsGrid({ initialProjects }: { initialProjects: any[] }) {
           const isRunning = rawStatus.includes("running")
 
           return (
-            <Card key={project.id} className="group relative overflow-hidden bg-card/40 backdrop-blur-sm border border-border/50 hover:border-border transition-all hover:shadow-sm">
-              <Link href={`/projects/${project.id}`} className="absolute inset-0 z-0" aria-label={`Ver detalle de ${project.name}`} />
+            <Card key={project.id} className="group relative bg-card/40 backdrop-blur-sm border border-border/50 hover:border-border transition-all hover:shadow-sm">
+              <Link href={`/projects/${project.id}`} className="absolute inset-0 z-0 rounded-xl" aria-label={`Ver detalle de ${project.name}`} />
               
               <CardHeader className="pb-4 relative z-10 pointer-events-none">
                 <div className="flex justify-between items-start">
