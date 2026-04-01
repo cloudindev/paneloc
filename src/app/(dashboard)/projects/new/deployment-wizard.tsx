@@ -16,6 +16,15 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
   const [selectedRepo, setSelectedRepo] = React.useState<any | null>(null)
   const [deployError, setDeployError] = React.useState<string | null>(null)
 
+  React.useEffect(() => {
+    // Cuando el usuario vuelve de la pestaña de GitHub de instalar la App,
+    // limpiamos el error visualmente para que la UI "reconozca" que ya ha vuelto
+    // y le incite a presionar Lanzar de nuevo.
+    const onFocus = () => setDeployError(null)
+    window.addEventListener("focus", onFocus)
+    return () => window.removeEventListener("focus", onFocus)
+  }, [])
+
   const filteredRepos = repositories.filter(repo => 
     repo.fullName.toLowerCase().includes(search.toLowerCase()) ||
     repo.name.toLowerCase().includes(search.toLowerCase())
@@ -149,6 +158,59 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
               )}
             </div>
           </CardContent>
+          <CardFooter className="flex-col gap-4 border-t border-border/50 pt-6">
+            <Button 
+              className="w-full text-primary-foreground font-semibold" 
+              size="lg"
+              onClick={deploy}
+              disabled={!selectedRepo || isDeploying}
+            >
+              {isDeploying ? (
+                <span className="flex items-center gap-2">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                  Iniciando Instancia...
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <Rocket className="h-5 w-5" />
+                  {selectedRepo ? "Lanzar Aplicación" : "Esperando Repositorio..."}
+                </span>
+              )}
+            </Button>
+
+            {deployError && (
+              <div className="w-full animate-in fade-in slide-in-from-top-2">
+                {deployError.includes("404") && deployError.includes("Repository not found") ? (
+                  <div className="flex bg-orange-500/10 border border-orange-500/30 p-4 rounded-xl items-start gap-4">
+                    <div className="flex-1 space-y-3">
+                      <h3 className="text-sm font-semibold text-orange-400">⚠️ Requiere Permisos en GitHub</h3>
+                      <p className="text-sm text-orange-400/80 leading-relaxed">
+                        No hemos podido acceder a <strong>{selectedRepo.fullName}</strong>. Para poder desplegar y automatizar repositorios privados, necesitas dar permiso explícito a la aplicación oficial de OLA Cloud en tu cuenta u organización de GitHub.
+                      </p>
+                      <Button asChild variant="default" className="w-full bg-orange-500 hover:bg-orange-600 text-white mt-2">
+                        <a href="https://github.com/apps/oladeployer/installations/new" target="_blank" rel="noopener noreferrer">
+                          <Github className="w-4 h-4 mr-2" />
+                          Conceder Permisos en GitHub
+                        </a>
+                      </Button>
+                      <p className="text-[11px] text-orange-400/60 text-center">
+                        Una vez instalada/autorizada en GitHub, vuelve a esta pestaña y presiona Lanzar de nuevo.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex bg-red-500/10 border border-red-500/30 p-4 rounded-xl items-start gap-4">
+                    <div className="flex-1 space-y-1">
+                      <h3 className="text-sm font-medium text-red-400">Error durante el despliegue</h3>
+                      <p className="text-xs text-red-400/80 leading-relaxed break-all">
+                        {deployError}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardFooter>
         </Card>
 
         {/* SETTINGS MANUALES */}
@@ -174,55 +236,6 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
                 Se usará para generar el subdominio inicial. Podrás personalizar tu dominio más adelante.
               </p>
             </div>
-
-            {selectedRepo?.private && (
-              <div className="space-y-2 pt-2 border-t border-border/50 mt-4 pt-4">
-                <div className="flex bg-blue-500/10 border border-blue-500/30 p-4 rounded-xl items-start gap-4">
-                  <div className="bg-blue-500/20 p-2 rounded-lg mt-0.5">
-                    <Lock className="h-4 w-4 text-blue-400" />
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <h3 className="text-sm font-medium text-blue-400">Despliegue Privado Automatizado</h3>
-                    <p className="text-xs text-muted-foreground/80 leading-relaxed">
-                      Este repositorio está protegido. Se utilizará la autenticación nativa de la <strong>Instalación OLA Cloud</strong> en GitHub para asegurar una comunicación sin contraseñas con el servidor y realizar rotación automática de permisos a la hora de compilar.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {deployError && (
-              <div className="space-y-2 pt-2 border-t border-border/50 mt-4 pt-4">
-                {deployError.includes("404") && deployError.includes("Repository not found") ? (
-                  <div className="flex bg-orange-500/10 border border-orange-500/30 p-4 rounded-xl items-start gap-4">
-                    <div className="flex-1 space-y-3">
-                      <h3 className="text-sm font-semibold text-orange-400">⚠️ Requiere Permisos en GitHub</h3>
-                      <p className="text-sm text-orange-400/80 leading-relaxed">
-                        No hemos podido acceder a <strong>{selectedRepo.fullName}</strong>. Para poder desplegar y automatizar repositorios privados, necesitas dar permiso explícito a la aplicación oficial de OLA Cloud en tu cuenta u organización de GitHub.
-                      </p>
-                      <Button asChild variant="default" className="w-full bg-orange-500 hover:bg-orange-600 text-white mt-2">
-                        <a href="https://github.com/apps/oladeployer/installations/new" target="_blank" rel="noopener noreferrer">
-                          <Github className="w-4 h-4 mr-2" />
-                          Conceder Permisos en GitHub
-                        </a>
-                      </Button>
-                      <p className="text-[11px] text-orange-400/60 text-center">
-                        Una vez instalada/autorizada en GitHub, vuelve aquí y haz click en Lanzar de nuevo.
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex bg-red-500/10 border border-red-500/30 p-4 rounded-xl items-start gap-4">
-                    <div className="flex-1 space-y-1">
-                      <h3 className="text-sm font-medium text-red-400">Error durante el despliegue</h3>
-                      <p className="text-xs text-red-400/80 leading-relaxed break-all">
-                        {deployError}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
 
             <div className="space-y-3 pt-4">
               <label className="text-sm font-medium leading-none">
@@ -295,24 +308,7 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
             </div>
           </CardContent>
           <CardFooter>
-            <Button 
-              className="w-full text-primary-foreground font-semibold" 
-              size="lg"
-              onClick={deploy}
-              disabled={!selectedRepo || isDeploying}
-            >
-              {isDeploying ? (
-                <span className="flex items-center gap-2">
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                  Iniciando Instancia...
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <Rocket className="h-5 w-5" />
-                  {selectedRepo ? "Lanzar Aplicación" : "Esperando Repositorio..."}
-                </span>
-              )}
-            </Button>
+            {/* Se movió el botón a la columna izquierda según especificación */}
           </CardFooter>
         </Card>
 
