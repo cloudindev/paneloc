@@ -180,7 +180,7 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
 
             {deployError && (
               <div className="w-full animate-in fade-in slide-in-from-top-2">
-                {deployError.includes("404") && deployError.includes("Repository not found") ? (
+                {((deployError.includes("404") && deployError.includes("Repository not found")) || (deployError.includes("500") && deployError.includes("private-github-app"))) ? (
                   <div className="flex bg-orange-500/10 border border-orange-500/30 p-4 rounded-xl items-start gap-4">
                     <div className="flex-1 space-y-3">
                       <h3 className="text-sm font-semibold text-orange-400">⚠️ Requiere Permisos en GitHub</h3>
