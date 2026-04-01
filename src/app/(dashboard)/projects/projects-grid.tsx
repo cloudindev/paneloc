@@ -66,13 +66,13 @@ function ActionMenu({ project, onDelete }: { project: any, onDelete: (id: string
                   <Trash2 className="h-6 w-6" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-foreground">Precaución Crítica</h2>
+                  <h2 className="text-xl font-semibold text-foreground">Advertencia</h2>
                   <p className="text-sm text-muted-foreground mt-0.5">Acción irreversible en Producción</p>
                 </div>
               </div>
               <p className="text-sm text-foreground/90 leading-relaxed pt-2">
                 Estás a punto de eliminar permanentemente el proyecto <span className="font-semibold text-primary">{project.name}</span>. 
-                Esto destruirá su contenedor virtual en Coolify y eliminará todo el código compilado sin posibilidad de recuperación.
+                Esto destruirá su contenedor virtual y eliminará todo el código compilado sin posibilidad de recuperación.
               </p>
               <div className="flex bg-destructive/5 text-destructive border border-destructive/10 p-3 rounded-xl mt-4">
                  <p className="text-[13px] font-medium leading-tight">Esta acción no elimina tu código fuente original en GitHub, pero interrumpe el acceso público a tu aplicación de inmediato.</p>
