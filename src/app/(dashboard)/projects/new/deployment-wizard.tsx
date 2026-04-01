@@ -14,6 +14,7 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
   const [isDisconnecting, setIsDisconnecting] = React.useState(false)
   const [search, setSearch] = React.useState("")
   const [selectedRepo, setSelectedRepo] = React.useState<any | null>(null)
+  const [deployError, setDeployError] = React.useState<string | null>(null)
 
   const filteredRepos = repositories.filter(repo => 
     repo.fullName.toLowerCase().includes(search.toLowerCase()) ||
@@ -23,6 +24,7 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
   const deploy = async () => {
     if (!selectedRepo) return
     setIsDeploying(true)
+    setDeployError(null)
     
     const res = await deployToCoolify({
       repoFullName: selectedRepo.fullName,
@@ -38,7 +40,7 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
       window.location.href = `/projects`
     } else {
       setIsDeploying(false)
-      alert("Error desplegando en Coolify: " + res.error)
+      setDeployError(res.error || "Error desconocido")
     }
   }
 
@@ -186,6 +188,39 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
                     </p>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {deployError && (
+              <div className="space-y-2 pt-2 border-t border-border/50 mt-4 pt-4">
+                {deployError.includes("404") && deployError.includes("Repository not found") ? (
+                  <div className="flex bg-orange-500/10 border border-orange-500/30 p-4 rounded-xl items-start gap-4">
+                    <div className="flex-1 space-y-3">
+                      <h3 className="text-sm font-semibold text-orange-400">⚠️ Requiere Permisos en GitHub</h3>
+                      <p className="text-sm text-orange-400/80 leading-relaxed">
+                        No hemos podido acceder a <strong>{selectedRepo.fullName}</strong>. Para poder desplegar y automatizar repositorios privados, necesitas dar permiso explícito a la aplicación oficial de OLA Cloud en tu cuenta u organización de GitHub.
+                      </p>
+                      <Button asChild variant="default" className="w-full bg-orange-500 hover:bg-orange-600 text-white mt-2">
+                        <a href="https://github.com/apps/oladeployer/installations/new" target="_blank" rel="noopener noreferrer">
+                          <Github className="w-4 h-4 mr-2" />
+                          Conceder Permisos en GitHub
+                        </a>
+                      </Button>
+                      <p className="text-[11px] text-orange-400/60 text-center">
+                        Una vez instalada/autorizada en GitHub, vuelve aquí y haz click en Lanzar de nuevo.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex bg-red-500/10 border border-red-500/30 p-4 rounded-xl items-start gap-4">
+                    <div className="flex-1 space-y-1">
+                      <h3 className="text-sm font-medium text-red-400">Error durante el despliegue</h3>
+                      <p className="text-xs text-red-400/80 leading-relaxed break-all">
+                        {deployError}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
