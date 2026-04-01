@@ -31,7 +31,7 @@ export async function GET() {
     return NextResponse.json({ 
       status: 'success', 
       appId,
-      appName: appData.name, 
+      appName: appData?.name, 
       formattedKeyLength: formattedPrivateKey.length,
       lines: formattedPrivateKey.split('\n').length
     });
