@@ -11,6 +11,7 @@ import { getLiveProjectStatus } from "@/app/actions/coolify"
 function ActionMenu({ project, onDelete }: { project: any, onDelete: (id: string) => void }) {
   const [open, setOpen] = React.useState(false)
   const [isDeleting, startDeleting] = React.useTransition()
+  const [showDeleteModal, setShowDeleteModal] = React.useState(false)
   const menuRef = React.useRef<HTMLDivElement>(null)
 
   React.useEffect(() => {
@@ -23,40 +24,86 @@ function ActionMenu({ project, onDelete }: { project: any, onDelete: (id: string
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [menuRef])
 
-  const handleDelete = () => {
-    if (confirm(`⚠️ PELIGRO:\n¿Estás seguro de que quieres eliminar PERMANENTEMENTE el proyecto "${project.name}"?\nSe destruirá su contenedor en Coolify y no se podrá deshacer.`)) {
-      startDeleting(async () => {
-        const res = await deleteProjectAction(project.id)
-        if (res.success) {
-          onDelete(project.id)
-        } else {
-          alert(`Error al eliminar: ${res.error}`)
-        }
-        setOpen(false)
-      })
-    }
+  const handleDeleteClick = () => {
+    setOpen(false)
+    setShowDeleteModal(true)
+  }
+
+  const confirmDelete = () => {
+    startDeleting(async () => {
+      const res = await deleteProjectAction(project.id)
+      if (res.success) {
+        onDelete(project.id)
+      } else {
+        alert(`Error al eliminar: ${res.error}`)
+      }
+      setShowDeleteModal(false)
+    })
   }
 
   return (
-    <div className="relative" ref={menuRef}>
-      <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground" onClick={() => setOpen(!open)} disabled={isDeleting}>
-        {isDeleting ? <Loader2 className="h-4 w-4 animate-spin text-destructive" /> : <MoreVertical className="h-4 w-4" />}
-      </Button>
-      {open && (
-        <div className="absolute right-0 top-10 w-48 rounded-md bg-popover border border-border shadow-md z-50 p-1 animate-in fade-in zoom-in-95 data-[side=bottom]:slide-in-from-top-2">
-          <button className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
-            <RotateCcw className="h-4 w-4 mr-2" /> Reiniciar (WIP)
-          </button>
-          <button className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent focus:bg-accent text-red-400 hover:text-red-500 data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
-            <Square className="h-4 w-4 mr-2" /> Detener (WIP)
-          </button>
-          <div className="h-px bg-border my-1"></div>
-          <button onClick={handleDelete} className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-destructive/10 text-destructive data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
-            <Trash2 className="h-4 w-4 mr-2" /> Eliminar Proyecto
-          </button>
+    <>
+      <div className="relative" ref={menuRef}>
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground" onClick={() => setOpen(!open)} disabled={isDeleting}>
+          {isDeleting ? <Loader2 className="h-4 w-4 animate-spin text-destructive" /> : <MoreVertical className="h-4 w-4" />}
+        </Button>
+        {open && (
+          <div className="absolute right-0 top-10 w-48 rounded-md bg-popover border border-border shadow-md z-50 p-1 animate-in fade-in zoom-in-95 data-[side=bottom]:slide-in-from-top-2">
+            <button className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+              <RotateCcw className="h-4 w-4 mr-2" /> Reiniciar (WIP)
+            </button>
+            <button className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent focus:bg-accent text-red-400 hover:text-red-500 data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+              <Square className="h-4 w-4 mr-2" /> Detener (WIP)
+            </button>
+            <div className="h-px bg-border my-1"></div>
+            <button onClick={handleDeleteClick} className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-destructive/10 text-destructive data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+              <Trash2 className="h-4 w-4 mr-2" /> Eliminar Proyecto
+            </button>
+          </div>
+        )}
+      </div>
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in duration-200 p-4">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-destructive/20 bg-card shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive shrink-0">
+                  <Trash2 className="h-6 w-6" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">Precaución Crítica</h2>
+                  <p className="text-sm text-muted-foreground mt-0.5">Acción irreversible en Producción</p>
+                </div>
+              </div>
+              <p className="text-sm text-foreground/90 leading-relaxed pt-2">
+                Estás a punto de eliminar permanentemente el proyecto <span className="font-semibold text-primary">{project.name}</span>. 
+                Esto destruirá su contenedor virtual en Coolify y eliminará todo el código compilado sin posibilidad de recuperación.
+              </p>
+              <div className="flex bg-destructive/5 text-destructive border border-destructive/10 p-3 rounded-xl mt-4">
+                 <p className="text-[13px] font-medium leading-tight">Esta acción no elimina tu código fuente original en GitHub, pero interrumpe el acceso público a tu aplicación de inmediato.</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-end gap-3 border-t border-border/50 bg-muted/30 px-6 py-4">
+              <Button variant="ghost" onClick={() => setShowDeleteModal(false)} disabled={isDeleting} className="rounded-xl hover:bg-foreground/5">
+                Cancelar
+              </Button>
+              <Button variant="destructive" onClick={confirmDelete} disabled={isDeleting} className="rounded-xl shadow-lg shadow-destructive/20 px-6">
+                {isDeleting ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Destruyendo...
+                  </span>
+                ) : (
+                  "Destruir Proyecto"
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
       )}
-    </div>
+    </>
   )
 }
 
