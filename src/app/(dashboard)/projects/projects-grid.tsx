@@ -233,7 +233,7 @@ export function ProjectsGrid({ initialProjects }: { initialProjects: any[] }) {
                     <span className={`capitalize font-medium ${textColor}`}>{status || "pending"}</span>
                   </div>
                   {project.domain && isRunning ? (
-                    <a href={project.domain.startsWith('http') ? project.domain : `http://${project.domain}`} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-primary transition-colors hover:underline truncate max-w-[150px] relative z-20 pointer-events-auto">
+                    <a href={project.domain.startsWith('http') ? project.domain : `https://${project.domain}`} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-primary transition-colors hover:underline truncate max-w-[150px] relative z-20 pointer-events-auto">
                       {project.domain.replace(/^https?:\/\//, '')}
                     </a>
                   ) : (

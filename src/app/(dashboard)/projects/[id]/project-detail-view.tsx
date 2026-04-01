@@ -62,8 +62,10 @@ export function ProjectDetailView({ initialResource }: { initialResource: any })
           <Button variant="outline" className="gap-2">
             <RefreshCw className="h-4 w-4" /> REINICIAR
           </Button>
-          <Button variant="default" className="gap-2">
-            VISITAR VISTA PREVIA
+          <Button variant="default" className="gap-2" asChild disabled={!domain}>
+            <a href={domain ? (domain.startsWith("http") ? domain : `https://${domain}`) : "#"} target="_blank" rel="noreferrer">
+              VISITAR VISTA PREVIA <ExternalLink className="h-4 w-4" />
+            </a>
           </Button>
         </div>
       </div>
@@ -78,7 +80,13 @@ export function ProjectDetailView({ initialResource }: { initialResource: any })
           <CardContent className="space-y-4 text-sm">
             <div className="flex justify-between border-b pb-2">
               <span className="text-muted-foreground">Dominio</span>
-              <span className="font-medium text-foreground">{domain || "Sin Dominio"}</span>
+              {domain ? (
+                <a href={domain.startsWith("http") ? domain : `https://${domain}`} target="_blank" rel="noreferrer" className="font-medium text-primary hover:underline flex items-center gap-1">
+                  {domain.replace(/^https?:\/\//, '')} <ExternalLink className="h-3 w-3" />
+                </a>
+              ) : (
+                <span className="font-medium text-foreground">Sin Dominio</span>
+              )}
             </div>
             <div className="flex justify-between border-b pb-2">
               <span className="text-muted-foreground">Estado</span>
