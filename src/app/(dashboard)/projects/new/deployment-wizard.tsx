@@ -188,7 +188,7 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
                         No hemos podido acceder a <strong>{selectedRepo.fullName}</strong>. Para poder desplegar y automatizar repositorios privados, necesitas dar permiso explícito a la aplicación oficial de OLA Cloud en tu cuenta u organización de GitHub.
                       </p>
                       <Button asChild variant="default" className="w-full bg-orange-500 hover:bg-orange-600 text-white mt-2">
-                        <a href="https://github.com/apps/oladeployer/installations/new" target="_blank" rel="noopener noreferrer">
+                        <a href={process.env.NEXT_PUBLIC_GITHUB_APP_INSTALL_URL || "https://github.com/apps/oladeployer/installations/new"} target="_blank" rel="noopener noreferrer">
                           <Github className="w-4 h-4 mr-2" />
                           Conceder Permisos en GitHub
                         </a>
