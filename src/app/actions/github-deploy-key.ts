@@ -42,8 +42,8 @@ function generateSSHKey() {
 }
 
 export async function addDeployKeyToGithubRepo(installationId: string, repoFullName: string) {
-  const appId = process.env.GITHUB_APP_ID
-  const privateKeyRaw = process.env.GITHUB_APP_PRIVATE_KEY
+  const appId = process.env.GITHUB_APP_ID?.trim()
+  const privateKeyRaw = process.env.GITHUB_APP_PRIVATE_KEY?.trim()
 
   if (!appId || !privateKeyRaw) {
     throw new Error("GITHUB_APP_ID or GITHUB_APP_PRIVATE_KEY missing in server config.")
