@@ -49,8 +49,20 @@ export async function addDeployKeyToGithubRepo(installationId: string, repoFullN
     throw new Error("GITHUB_APP_ID or GITHUB_APP_PRIVATE_KEY missing in server config.")
   }
 
-  // Parse the private key properly because it could contain escaped newlines in Vercel/Coolify env
-  const formattedPrivateKey = privateKeyRaw.replace(/\\n/g, '\n')
+  // Parse the private key properly. Si el usuario lo pegó en sola 1 línea sin IsMultiline en Coolify, lo reparamos:
+  let formattedPrivateKey = privateKeyRaw.replace(/\\n/g, '\n')
+  if (!formattedPrivateKey.includes('\n')) {
+     const beginStr = '-----BEGIN RSA PRIVATE KEY-----';
+     const endStr = '-----END RSA PRIVATE KEY-----';
+     if (formattedPrivateKey.includes(beginStr) && formattedPrivateKey.includes(endStr)) {
+       const base64Content = formattedPrivateKey.replace(beginStr, '').replace(endStr, '').replace(/\s+/g, '');
+       const chunks = [];
+       for(let i = 0; i < base64Content.length; i += 64) {
+         chunks.push(base64Content.substring(i, i + 64));
+       }
+       formattedPrivateKey = `${beginStr}\n${chunks.join('\n')}\n${endStr}\n`;
+     }
+  }
 
   const app = new App({
     appId,
