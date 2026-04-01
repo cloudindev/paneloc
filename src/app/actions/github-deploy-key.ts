@@ -17,6 +17,7 @@ function writeBuffer(buf: Buffer) {
 
 // Emulates `ssh-keygen` purely in JavaScript, to avoid missing binaries in Docker containers like Nixpacks
 function generateSSHKey() {
+  // @ts-ignore: TS overload gets confused with rsa key options
   const { publicKey, privateKey } = generateKeyPairSync('rsa', {
     modulusLength: 2048,
     privateKeyEncoding: { type: 'pkcs1', format: 'pem' } // Outputs: -----BEGIN RSA PRIVATE KEY-----
