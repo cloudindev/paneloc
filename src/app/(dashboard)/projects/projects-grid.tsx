@@ -61,16 +61,24 @@ function ActionMenu({ project, onDelete }: { project: any, onDelete: (id: string
 }
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 export function ProjectsGrid({ initialProjects }: { initialProjects: any[] }) {
   const [projects, setProjects] = React.useState(initialProjects)
   const [search, setSearch] = React.useState("")
+  const router = useRouter()
+
+  const projectsRef = React.useRef(projects)
+  React.useEffect(() => {
+    projectsRef.current = projects
+  }, [projects])
 
   React.useEffect(() => {
     // Polling background silencioso para inyectar status vital del contenedor VM100
     const fetchStatuses = async () => {
+      const currentProjects = projectsRef.current
       const updated = await Promise.all(
-        projects.map(async (p) => {
+        currentProjects.map(async (p) => {
           if (!p.config?.coolify_uuid) return p
           const live = await getLiveProjectStatus(p.config.coolify_uuid)
           if (live.success) {
@@ -166,7 +174,10 @@ export function ProjectsGrid({ initialProjects }: { initialProjects: any[] }) {
                     </div>
                   </div>
                   <div className="pointer-events-auto">
-                    <ActionMenu project={project} onDelete={(id) => setProjects(prev => prev.filter(p => p.id !== id))} />
+                    <ActionMenu project={project} onDelete={(id) => {
+                      setProjects(prev => prev.filter(p => p.id !== id))
+                      router.refresh()
+                    }} />
                   </div>
                 </div>
               </CardHeader>
