@@ -5,7 +5,8 @@ import { Rocket, GitBranch, HardDrive, TerminalSquare, Box, Server, Github, Sear
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { disconnectGithub } from "@/app/actions/github"
+import { useSearchParams, useRouter, usePathname } from "next/navigation"
+import { disconnectGithub, saveGithubInstallation } from "@/app/actions/github"
 import { deployToCoolify } from "@/app/actions/coolify"
 
 export function DeploymentWizard({ repositories }: { repositories: any[] }) {
@@ -15,15 +16,26 @@ export function DeploymentWizard({ repositories }: { repositories: any[] }) {
   const [search, setSearch] = React.useState("")
   const [selectedRepo, setSelectedRepo] = React.useState<any | null>(null)
   const [deployError, setDeployError] = React.useState<string | null>(null)
+  
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
 
   React.useEffect(() => {
-    // Cuando el usuario vuelve de la pestaña de GitHub de instalar la App,
-    // limpiamos el error visualmente para que la UI "reconozca" que ya ha vuelto
-    // y le incite a presionar Lanzar de nuevo.
+    // Cuando el usuario vuelve de GitHub, primero atrapamos el installation_id si existe
+    const installationId = searchParams.get("installation_id")
+    if (installationId) {
+      saveGithubInstallation(installationId).then((res) => {
+        if (res.success) {
+          router.replace(pathname) // Limpiamos la URL
+        }
+      })
+    }
+
     const onFocus = () => setDeployError(null)
     window.addEventListener("focus", onFocus)
     return () => window.removeEventListener("focus", onFocus)
-  }, [])
+  }, [searchParams, router, pathname])
 
   const filteredRepos = repositories.filter(repo => 
     repo.fullName.toLowerCase().includes(search.toLowerCase()) ||

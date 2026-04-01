@@ -112,3 +112,32 @@ export async function disconnectGithub() {
     return { success: false, error: "Internal server error" }
   }
 }
+
+export async function saveGithubInstallation(installationId: string) {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get("olacloud_session")?.value
+    if (!token) return { success: false, error: "No session found" }
+
+    const session = await verifyJWT(token)
+    if (!session || !session.sub) return { success: false, error: "Invalid session" }
+
+    // Grab user's org
+    const member = await prisma.organizationMember.findFirst({
+      where: { userId: session.sub },
+      include: { organization: true }
+    })
+
+    if (!member) return { success: false, error: "No organization found" }
+
+    await prisma.organization.update({
+      where: { id: member.organizationId },
+      data: { githubInstallationId: installationId }
+    })
+
+    return { success: true }
+  } catch (error) {
+    console.error("Error saving github installation:", error)
+    return { success: false, error: "Internal server error" }
+  }
+}

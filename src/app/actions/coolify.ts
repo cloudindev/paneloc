@@ -161,14 +161,36 @@ export async function deployToCoolify(params: {
     let endpoint = "/applications/public"
 
     if (params.isPrivate) {
-      const githubAppUuid = process.env.COOLIFY_GITHUB_APP_UUID
-      if (!githubAppUuid) {
-        throw new Error("COOLIFY_GITHUB_APP_UUID no configurado. Requerido para repositorios privados.")
+      const member = await prisma.organizationMember.findFirst({
+        where: { userId: session.sub },
+        include: { organization: true }
+      })
+      const org = member?.organization
+
+      if (!org?.githubInstallationId) {
+        // Usamos un keyword "private-github-app" en el error para que el frontend destape la tarjeta naranja
+        throw new Error("Faltan permisos 500 private-github-app OLA Cloud: Debes dar permisos en GitHub primero.")
       }
-      endpoint = "/applications/private-github-app"
-      appPayload.github_app_uuid = githubAppUuid
-      // Para la app privada nativa (según la documentación oficial) REQUIERE owner/repo estricto (no URLs)
-      appPayload.git_repository = params.repoFullName
+
+      // Add Deploy Key to GitHub and post it to Coolify
+      const { addDeployKeyToGithubRepo } = await import("./github-deploy-key")
+      const { privateKey } = await addDeployKeyToGithubRepo(org.githubInstallationId, params.repoFullName)
+
+      // Store private key in Coolify
+      const keyPayload = {
+        name: `ola-key-${params.projectName.substring(0,20)}-${Date.now()}`,
+        description: `Auto-generated for ${params.repoFullName}`,
+        private_key: privateKey
+      }
+      
+      const keyCreated = await coolifyFetch("POST", "/security/keys", keyPayload)
+      if (!keyCreated || !keyCreated.uuid) {
+        throw new Error("No se pudo registrar la llave de seguridad SSH en Coolify.")
+      }
+
+      endpoint = "/applications/private-deploy-key"
+      appPayload.private_key_uuid = keyCreated.uuid
+      appPayload.git_repository = `git@github.com:${params.repoFullName}.git`
     } else {
       appPayload.git_repository = gitRepositoryUrlClean
     }

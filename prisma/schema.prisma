@@ -22,6 +22,8 @@ model Organization {
   members     OrganizationMember[]
   projects    Project[]
   integrations Integration[]
+
+  githubInstallationId String?
 }
 
 model User {
