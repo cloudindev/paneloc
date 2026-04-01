@@ -1,32 +1,43 @@
 "use server"
 
-import { execSync } from "child_process"
-import { randomBytes } from "crypto"
-import fs from "fs"
-import path from "path"
+import { generateKeyPairSync } from "crypto"
 import { App } from "octokit"
-import { prisma } from "@/lib/prisma"
 
-// We use child_process ssh-keygen because Node's crypto module doesn't natively export OpenSSH format yet
-function generateSSHKey() {
-  const tmpName = 'key_ola_' + randomBytes(8).toString('hex')
-  const tmpPath = path.join('/tmp', tmpName)
-  
-  // Generate ED25519 key with no passphrase
-  execSync(`ssh-keygen -t ed25519 -N "" -f ${tmpPath} -C "olacloud-deploy"`, { stdio: 'ignore' })
-  
-  const privateKey = fs.readFileSync(tmpPath, 'utf8')
-  const publicKey = fs.readFileSync(`${tmpPath}.pub`, 'utf8')
-  
-  // Cleanup
-  try {
-    fs.unlinkSync(tmpPath)
-    fs.unlinkSync(`${tmpPath}.pub`)
-  } catch (e) {
-    console.error("Failed to cleanup tmp ssh keys", e)
+// Helper function to encode raw buffers to SSH OpenSSH standard format
+function writeBuffer(buf: Buffer) {
+  // If first byte has highest bit set, prepend with 0x00 to mark it as positive integer
+  if (buf[0] & 0x80) {
+    const pad = Buffer.alloc(1)
+    buf = Buffer.concat([pad, buf])
   }
+  const lenBuf = Buffer.alloc(4)
+  lenBuf.writeUInt32BE(buf.length, 0)
+  return Buffer.concat([lenBuf, buf])
+}
+
+// Emulates `ssh-keygen` purely in JavaScript, to avoid missing binaries in Docker containers like Nixpacks
+function generateSSHKey() {
+  const { publicKey, privateKey } = generateKeyPairSync('rsa', {
+    modulusLength: 2048,
+    privateKeyEncoding: { type: 'pkcs1', format: 'pem' } // Outputs: -----BEGIN RSA PRIVATE KEY-----
+  })
+
+  // Export public key to base64url JWK format to cleanly grab modulus (n) and exponent (e)
+  const jwk = publicKey.export({ format: 'jwk' })
+
+  const eBuffer = Buffer.from(jwk.e as string, 'base64url')
+  const nBuffer = Buffer.from(jwk.n as string, 'base64url')
+
+  const typeBuf = writeBuffer(Buffer.from('ssh-rsa'))
+  const sshBuffer = Buffer.concat([
+    typeBuf,
+    writeBuffer(eBuffer),
+    writeBuffer(nBuffer)
+  ])
+
+  const OpenSSHPublicKey = `ssh-rsa ${sshBuffer.toString('base64')} olacloud-deploy`
   
-  return { privateKey, publicKey }
+  return { privateKey, publicKey: OpenSSHPublicKey }
 }
 
 export async function addDeployKeyToGithubRepo(installationId: string, repoFullName: string) {
