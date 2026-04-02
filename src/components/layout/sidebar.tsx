@@ -63,10 +63,10 @@ export function Sidebar({ projects = [] }: { projects?: any[] }) {
                isProjectContext ? "text-emerald-500" : "text-muted-foreground"
             )}>
               AI Cloud 
-              <div className={cn("h-px flex-1 ml-2", isProjectContext ? "bg-gradient-to-r from-emerald-500 to-cyan-400" : "bg-border")}></div>
+              <div className={cn("h-px flex-1 ml-2", isProjectContext ? "bg-primary" : "bg-border")}></div>
             </div>
             
-            <Button asChild className="mb-4 w-full justify-start gap-2 bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary border border-primary/20">
+            <Button asChild className="mb-4 w-full justify-start gap-2 shadow-sm">
               <Link href="/projects/new">
                 <PlusCircle className="h-4 w-4" /> Nueva App
               </Link>
@@ -90,14 +90,14 @@ export function Sidebar({ projects = [] }: { projects?: any[] }) {
                         href={item.href}
                         className={cn(
                           isActive
-                            ? "bg-primary/10 text-primary"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                            ? "bg-white text-foreground shadow-sm border border-border/50"
+                            : "text-muted-foreground hover:bg-white/50 hover:text-foreground",
                           "group flex gap-x-3 rounded-md p-2 text-sm font-medium leading-6 transition-all duration-200"
                         )}
                       >
                         <item.icon
                           className={cn(
-                            isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
+                            isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground",
                             "h-5 w-5 shrink-0 transition-colors"
                           )}
                           aria-hidden="true"
@@ -125,11 +125,11 @@ export function Sidebar({ projects = [] }: { projects?: any[] }) {
                         <Link
                           href={item.href}
                           className={cn(
-                            isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                            isActive ? "bg-white text-foreground shadow-sm border border-border/50" : "text-muted-foreground hover:bg-white/50 hover:text-foreground",
                             "group flex gap-x-3 rounded-md p-2 text-sm font-medium leading-6 transition-all duration-200"
                           )}
                         >
-                          <item.icon className={cn(isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground", "h-4 w-4 shrink-0 transition-colors mt-1")} />
+                          <item.icon className={cn(isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground", "h-4 w-4 shrink-0 transition-colors mt-1")} />
                           {item.name}
                         </Link>
                       </li>
@@ -145,8 +145,8 @@ export function Sidebar({ projects = [] }: { projects?: any[] }) {
                 <ul role="list" className="flex flex-col gap-y-1">
                   {projectDatabaseNav.map((item) => (
                     <li key={item.name}>
-                      <Link href={item.href} className={cn(pathname.startsWith(item.href) ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground", "group flex gap-x-3 rounded-md p-2 text-sm font-medium leading-6 transition-all duration-200")}>
-                        <item.icon className={cn(pathname.startsWith(item.href) ? "text-primary" : "text-muted-foreground group-hover:text-foreground", "h-4 w-4 shrink-0 transition-colors mt-1")} />
+                      <Link href={item.href} className={cn(pathname.startsWith(item.href) ? "bg-white text-foreground shadow-sm border border-border/50" : "text-muted-foreground hover:bg-white/50 hover:text-foreground", "group flex gap-x-3 rounded-md p-2 text-sm font-medium leading-6 transition-all duration-200")}>
+                        <item.icon className={cn(pathname.startsWith(item.href) ? "text-foreground" : "text-muted-foreground group-hover:text-foreground", "h-4 w-4 shrink-0 transition-colors mt-1")} />
                         {item.name}
                       </Link>
                     </li>
@@ -161,8 +161,8 @@ export function Sidebar({ projects = [] }: { projects?: any[] }) {
                 <ul role="list" className="flex flex-col gap-y-1">
                   {projectStorageNav.map((item) => (
                     <li key={item.name}>
-                      <Link href={item.href} className={cn(pathname.startsWith(item.href) ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground", "group flex gap-x-3 rounded-md p-2 text-sm font-medium leading-6 transition-all duration-200")}>
-                        <item.icon className={cn(pathname.startsWith(item.href) ? "text-primary" : "text-muted-foreground group-hover:text-foreground", "h-4 w-4 shrink-0 transition-colors mt-1")} />
+                      <Link href={item.href} className={cn(pathname.startsWith(item.href) ? "bg-white text-foreground shadow-sm border border-border/50" : "text-muted-foreground hover:bg-white/50 hover:text-foreground", "group flex gap-x-3 rounded-md p-2 text-sm font-medium leading-6 transition-all duration-200")}>
+                        <item.icon className={cn(pathname.startsWith(item.href) ? "text-foreground" : "text-muted-foreground group-hover:text-foreground", "h-4 w-4 shrink-0 transition-colors mt-1")} />
                         {item.name}
                       </Link>
                     </li>
