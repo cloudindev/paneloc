@@ -140,17 +140,17 @@ export function DeploymentsList({ resource, initialDeployments, initialDebug }: 
                 ))}
               </tbody>
             </table>
-            
-            {deployments.length > itemsPerPage && (
+            {/* Renderizar siempre el pie de paginación si hay registros, para que el usuario sepa que está activa */}
+            {deployments.length > 0 && (
               <div className="flex items-center justify-between px-4 py-3 border-t border-border/50 bg-muted/20">
                 <div className="text-xs text-muted-foreground">
-                  Mostrando {(page - 1) * itemsPerPage + 1} a {Math.min(page * itemsPerPage, deployments.length)} de {deployments.length} despliegues
+                  Mostrando {deployments.length === 0 ? 0 : (page - 1) * itemsPerPage + 1} a {Math.min(page * itemsPerPage, deployments.length)} de {deployments.length} despliegues
                 </div>
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="sm" onClick={() => setPage(page - 1)} disabled={page === 1} className="h-8 text-xs">
                     Anterior
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => setPage(page + 1)} disabled={page === Math.ceil(deployments.length / itemsPerPage)} className="h-8 text-xs">
+                  <Button variant="outline" size="sm" onClick={() => setPage(page + 1)} disabled={page >= Math.ceil(deployments.length / itemsPerPage)} className="h-8 text-xs">
                     Siguiente
                   </Button>
                 </div>
