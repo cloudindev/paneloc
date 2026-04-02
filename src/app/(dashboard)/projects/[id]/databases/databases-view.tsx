@@ -146,6 +146,9 @@ function DatabaseDetailView({ db, initialView, onBack }: { db: any, initialView:
   const [columns, setColumns] = React.useState<any[]>([]);
   const [loadingTables, setLoadingTables] = React.useState(true);
   const [loadingColumns, setLoadingColumns] = React.useState(false);
+  
+  const [searchTableQuery, setSearchTableQuery] = React.useState("");
+  const [searchColumnQuery, setSearchColumnQuery] = React.useState("");
 
   React.useEffect(() => {
     async function loadTables() {
@@ -281,7 +284,12 @@ function DatabaseDetailView({ db, initialView, onBack }: { db: any, initialView:
                 </div>
                 <div className="relative">
                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                   <Input placeholder="Search for a table..." className="pl-9 h-10 w-full sm:w-64 bg-background" />
+                   <Input 
+                     placeholder="Search for a table..." 
+                     className="pl-9 h-10 w-full sm:w-64 bg-background" 
+                     value={searchTableQuery}
+                     onChange={(e) => setSearchTableQuery(e.target.value)}
+                   />
                 </div>
              </div>
           </div>
@@ -313,7 +321,9 @@ function DatabaseDetailView({ db, initialView, onBack }: { db: any, initialView:
                            No hay tablas en la base de datos.
                         </td>
                       </tr>
-                    ) : tables.map((table, idx) => (
+                    ) : tables
+                        .filter(table => table.name.toLowerCase().includes(searchTableQuery.toLowerCase()))
+                        .map((table, idx) => (
                       <tr key={idx} className="hover:bg-muted/10 transition-colors group">
                         <td className="px-6 py-4">
                            <div className="flex items-center gap-3 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => handleTableClick(table.name)}>
@@ -369,7 +379,12 @@ function DatabaseDetailView({ db, initialView, onBack }: { db: any, initialView:
                <h2 className="text-3xl font-bold tracking-tight">{selectedTable}</h2>
                <div className="relative w-full sm:w-64">
                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                   <Input placeholder="Filter columns" className="pl-9 bg-card h-10" />
+                   <Input 
+                     placeholder="Filter columns" 
+                     className="pl-9 bg-card h-10" 
+                     value={searchColumnQuery}
+                     onChange={(e) => setSearchColumnQuery(e.target.value)}
+                   />
                </div>
             </div>
 
@@ -398,7 +413,9 @@ function DatabaseDetailView({ db, initialView, onBack }: { db: any, initialView:
                                No hay columnas para mostrar.
                             </td>
                           </tr>
-                       ) : columns.map((col, idx) => (
+                       ) : columns
+                           .filter(col => col.name.toLowerCase().includes(searchColumnQuery.toLowerCase()))
+                           .map((col, idx) => (
                           <tr key={idx} className="hover:bg-muted/10 transition-colors group">
                              <td className="px-6 py-4">
                                 <div className="flex items-center gap-3 font-medium text-foreground">
