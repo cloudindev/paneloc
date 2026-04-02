@@ -17,6 +17,12 @@ async function run() {
       console.log("Posting to /applications/private-github-app");
       const rDeps = await coolifyFetch("POST", "/applications/private-github-app", appPayload);
       console.log("Output:", rDeps);
-  } catch(e) { console.error("Error", e.message) }
+  } catch(e) { 
+    if (e instanceof Error) {
+      console.error("Error", e.message);
+    } else {
+      console.error("Error", String(e));
+    }
+  }
 }
 run();
