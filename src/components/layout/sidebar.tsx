@@ -49,7 +49,7 @@ export function Sidebar({ projects = [] }: { projects?: any[] }) {
   ]
 
   return (
-    <div className="flex w-64 flex-col border-r border-border bg-[#F0EFEA] backdrop-blur-xl">
+    <div className="flex w-64 flex-col border-r border-border/50 bg-[#F9FAFB]">
       <div className="flex h-16 shrink-0 items-center px-6">
         <Link href="/">
           <OlaLogo />

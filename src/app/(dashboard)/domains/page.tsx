@@ -70,17 +70,19 @@ export default function DomainsPage() {
     setFormSaving(false)
   }
 
-  const handleDeleteDomain = async (resourceId: string, domainName: string) => {
-    if (!confirm(`¿Estás seguro de que quieres desvincular el dominio ${domainName}?`)) return
-    
-    setDeletingId(domainName)
-    const res = await removeDomainFromResource(resourceId, domainName)
+  const [deleteModalDomain, setDeleteModalDomain] = React.useState<{resourceId: string, domainName: string} | null>(null)
+
+  const confirmDeleteDomain = async () => {
+    if (!deleteModalDomain) return
+    setDeletingId(deleteModalDomain.domainName)
+    const res = await removeDomainFromResource(deleteModalDomain.resourceId, deleteModalDomain.domainName)
     if (res.success) {
       await fetchAll()
     } else {
       alert("Error eliminando dominio: " + res.error)
     }
     setDeletingId(null)
+    setDeleteModalDomain(null)
   }
 
   const filteredDomains = domains.filter((d: any) => 
@@ -191,7 +193,7 @@ export default function DomainsPage() {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"
-                      onClick={() => handleDeleteDomain(domain.resourceId, domain.name)}
+                      onClick={() => setDeleteModalDomain({resourceId: domain.resourceId, domainName: domain.name})}
                       disabled={deletingId === domain.name}
                     >
                       {deletingId === domain.name ? (
@@ -335,6 +337,31 @@ export default function DomainsPage() {
           </div>
         </div>
       )}
+
+      {deleteModalDomain && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-xl animate-in fade-in zoom-in-95 text-center">
+            <div className="mx-auto w-12 h-12 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mb-4">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <h2 className="text-lg font-semibold tracking-tight mb-2">
+              Desvincular Dominio
+            </h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              ¿Estás seguro de que quieres desvincular el dominio <strong>{deleteModalDomain.domainName}</strong>? Esta acción no se puede deshacer.
+            </p>
+            <div className="flex justify-center gap-3 w-full">
+              <Button variant="outline" className="flex-1" onClick={() => setDeleteModalDomain(null)} disabled={deletingId !== null}>
+                Cancelar
+              </Button>
+              <Button onClick={confirmDeleteDomain} disabled={deletingId !== null} className="flex-1 bg-red-600 hover:bg-red-700 text-white">
+                {deletingId ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Eliminar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
-} // Documented: Migrated placeholder arrays to synchronized Prisma fetch pipelines.
+}

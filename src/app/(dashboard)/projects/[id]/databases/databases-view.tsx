@@ -99,20 +99,26 @@ function SqlConsole({ dbId }: { dbId: string }) {
 function DatabaseSquareCard({ db, handleDeleteDb, isDeleting, onOpenDetail, resourceName }: any) {
   return (
     <Card className="border-border/50 bg-card/40 backdrop-blur-sm relative group rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between aspect-square max-w-sm hover:border-primary/50 transition-colors">
-      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => handleDeleteDb(db.id, db.config?.coolify_uuid)} disabled={isDeleting === db.id}>
-            {isDeleting === db.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-          </Button>
-      </div>
       <CardHeader className="py-6 flex-1">
         <div className="flex justify-between items-start mb-4">
           <div className="w-14 h-14 rounded-xl text-blue-400 bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shadow-sm">
             <Database className="w-7 h-7 outline-none" />
           </div>
-          <span className="text-[11px] bg-emerald-500/10 text-emerald-500 px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5 border border-emerald-500/20">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite]" />
-            {db.status === "running" ? "Running" : db.status}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] bg-emerald-500/10 text-emerald-500 px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5 border border-emerald-500/20">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite]" />
+              {db.status === "running" ? "Running" : db.status}
+            </span>
+            <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity" 
+                onClick={(e) => { e.stopPropagation(); handleDeleteDb(db.id, db.config?.coolify_uuid) }} 
+                disabled={isDeleting === db.id}
+            >
+              {isDeleting === db.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+            </Button>
+          </div>
         </div>
         <div>
           <CardTitle className="text-xl tracking-tight disabled:opacity-50 font-semibold truncate">{db.name}</CardTitle>
