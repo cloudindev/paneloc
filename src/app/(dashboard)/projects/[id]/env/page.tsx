@@ -85,17 +85,19 @@ export default function ProjectEnvVarsPage({ params }: { params: Promise<{ id: s
     setFormSaving(false)
   }
 
-  const handleDelete = async (env: any) => {
-    if (!confirm(`¿Estás seguro de eliminar la variable ${env.key}?`)) return
-    
-    setDeletingId(env.uuid)
-    const res = await deleteAppEnvVar(resourceId, env.uuid)
+  const [deleteModalEnv, setDeleteModalEnv] = React.useState<any | null>(null)
+
+  const confirmDeleteEnv = async () => {
+    if (!deleteModalEnv) return
+    setDeletingId(deleteModalEnv.uuid)
+    const res = await deleteAppEnvVar(resourceId, deleteModalEnv.uuid)
     if (res.success) {
-      setEnvVars(prev => prev.filter(v => v.uuid !== env.uuid))
+      setEnvVars(prev => prev.filter(v => v.uuid !== deleteModalEnv.uuid))
     } else {
       alert("Error borrando variable: " + res.error)
     }
     setDeletingId(null)
+    setDeleteModalEnv(null)
   }
 
   const filteredEnvs = envVars.filter(e => e.key.toLowerCase().includes(search.toLowerCase()))
@@ -199,7 +201,7 @@ export default function ProjectEnvVarsPage({ params }: { params: Promise<{ id: s
                         variant="ghost" 
                         size="icon" 
                         className="h-8 w-8 hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => handleDelete(envVar)}
+                        onClick={() => setDeleteModalEnv(envVar)}
                         disabled={deletingId === envVar.uuid}
                       >
                         {deletingId === envVar.uuid ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
@@ -297,6 +299,31 @@ export default function ProjectEnvVarsPage({ params }: { params: Promise<{ id: s
               <Button onClick={handleSave} disabled={formSaving || !formKey.trim()} className="gap-2">
                 {formSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 Guardar Variable
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteModalEnv && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-xl animate-in fade-in zoom-in-95 text-center">
+            <div className="mx-auto w-12 h-12 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mb-4">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <h2 className="text-lg font-semibold tracking-tight mb-2">
+              Eliminar Variable
+            </h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              ¿Estás seguro de eliminar la variable secreta <strong>{deleteModalEnv.key}</strong>? Los despliegues pendientes y activos dejarán de tener acceso a ella.
+            </p>
+            <div className="flex justify-center gap-3 w-full">
+              <Button variant="outline" className="flex-1" onClick={() => setDeleteModalEnv(null)} disabled={deletingId !== null}>
+                Cancelar
+              </Button>
+              <Button onClick={confirmDeleteEnv} disabled={deletingId !== null} className="flex-1 bg-red-600 hover:bg-red-700 text-white">
+                {deletingId ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Eliminar
               </Button>
             </div>
           </div>

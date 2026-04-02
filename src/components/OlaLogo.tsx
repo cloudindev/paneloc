@@ -1,6 +1,8 @@
-export default function OlaLogo() {
+import { cn } from "@/lib/utils";
+
+export default function OlaLogo({ className }: { className?: string }) {
   return (
-    <div className="w-[160px] h-[52px] relative shrink-0 group flex items-center">
+    <div className={cn("w-[160px] h-[52px] relative shrink-0 group flex items-center", className)}>
       {/* Base Logo - Clean */}
       <img 
         src="/olacloud-logo.png" 

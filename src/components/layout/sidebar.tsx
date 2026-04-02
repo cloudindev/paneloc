@@ -13,7 +13,9 @@ import {
   CloudLightning,
   Activity,
   HardDrive,
-  ArrowLeft
+  ArrowLeft,
+  CreditCard,
+  BarChart2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -22,6 +24,11 @@ import OlaLogo from "@/components/OlaLogo"
 const globalNavigation = [
   { name: 'Proyectos', href: '/projects', icon: FolderGit2 },
   { name: 'Dominios', href: '/domains', icon: Globe },
+]
+
+const globalManageNav = [
+  { name: 'Facturación', href: '/billing', icon: CreditCard },
+  { name: 'Uso de recursos', href: '/usage', icon: BarChart2 },
 ]
 
 export function Sidebar({ projects = [] }: { projects?: any[] }) {
@@ -50,9 +57,9 @@ export function Sidebar({ projects = [] }: { projects?: any[] }) {
 
   return (
     <div className="flex w-64 flex-col border-r border-border/50 bg-[#F9FAFB]">
-      <div className="flex h-16 shrink-0 items-center px-6">
+      <div className="flex h-16 shrink-0 items-center px-6 border-b border-border/40">
         <Link href="/">
-          <OlaLogo />
+          <OlaLogo className="w-[120px] h-[38px] xl:w-[130px] xl:h-[42px]" />
         </Link>
       </div>
       
@@ -81,7 +88,7 @@ export function Sidebar({ projects = [] }: { projects?: any[] }) {
             )}
 
             {!isProjectContext && (
-              <ul role="list" className="flex flex-1 flex-col gap-y-1">
+              <ul role="list" className="flex flex-col gap-y-1">
                 {globalNavigation.map((item) => {
                   const isActive = pathname === item.href || (pathname !== '/' && pathname?.startsWith(item.href))
                   return (
@@ -108,6 +115,41 @@ export function Sidebar({ projects = [] }: { projects?: any[] }) {
                   )
                 })}
               </ul>
+            )}
+
+            {!isProjectContext && (
+              <div className="mt-8">
+                <div className="text-xs font-semibold text-muted-foreground mb-3 px-2 uppercase tracking-wider flex items-center gap-2">
+                  Gestión <div className="h-px bg-border flex-1 ml-2"></div>
+                </div>
+                <ul role="list" className="flex flex-col gap-y-1">
+                  {globalManageNav.map((item) => {
+                    const isActive = pathname === item.href || (pathname !== '/' && pathname?.startsWith(item.href))
+                    return (
+                      <li key={item.name}>
+                        <Link
+                          href={item.href}
+                          className={cn(
+                            isActive
+                              ? "bg-white text-foreground shadow-sm border border-border/50"
+                              : "text-muted-foreground hover:bg-white/50 hover:text-foreground",
+                            "group flex gap-x-3 rounded-md p-2 text-sm font-medium leading-6 transition-all duration-200"
+                          )}
+                        >
+                          <item.icon
+                            className={cn(
+                              isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground",
+                              "h-5 w-5 shrink-0 transition-colors"
+                            )}
+                            aria-hidden="true"
+                          />
+                          {item.name}
+                        </Link>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
             )}
           </div>
 

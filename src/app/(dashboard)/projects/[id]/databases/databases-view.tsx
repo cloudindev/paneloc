@@ -567,12 +567,18 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
     setStep(1)
   }
 
+  const [deleteModalDb, setDeleteModalDb] = React.useState<{dbId: string, coolifyUuid: string} | null>(null)
+
   const handleDeleteDb = async (dbId: string, coolifyUuid: string) => {
-    if (!confirm("¿Estás seguro de que deseas eliminar permanentemente esta base de datos y todos sus volúmenes de almacenamiento? Esta acción es irreversible.")) return
-    
-    setIsDeleting(dbId)
-    const res = await deleteDatabaseFromCoolify(dbId, coolifyUuid)
+    setDeleteModalDb({ dbId, coolifyUuid })
+  }
+
+  const confirmDeleteDb = async () => {
+    if (!deleteModalDb) return
+    setIsDeleting(deleteModalDb.dbId)
+    const res = await deleteDatabaseFromCoolify(deleteModalDb.dbId, deleteModalDb.coolifyUuid)
     setIsDeleting(null)
+    setDeleteModalDb(null)
     
     if (res.success) {
       router.refresh()
@@ -727,6 +733,31 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
               />
             ))}
           </div>
+          
+          {deleteModalDb && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm">
+              <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-xl animate-in fade-in zoom-in-95 text-center">
+                <div className="mx-auto w-12 h-12 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mb-4">
+                  <Trash2 className="w-6 h-6" />
+                </div>
+                <h2 className="text-lg font-semibold tracking-tight mb-2">
+                  Eliminar Base de Datos
+                </h2>
+                <p className="text-sm text-muted-foreground mb-6">
+                  ¿Estás seguro de que deseas eliminar permanentemente esta base de datos y todos sus volúmenes? Esta acción es irreversible.
+                </p>
+                <div className="flex justify-center gap-3 w-full">
+                  <Button variant="outline" className="flex-1" onClick={() => setDeleteModalDb(null)} disabled={isDeleting !== null}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={confirmDeleteDb} disabled={isDeleting !== null} className="flex-1 bg-red-600 hover:bg-red-700 text-white">
+                    {isDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    Aceptar
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )
     }
