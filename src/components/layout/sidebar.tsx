@@ -12,7 +12,8 @@ import {
   Database,
   CloudLightning,
   Activity,
-  HardDrive
+  HardDrive,
+  ArrowLeft
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -73,8 +74,11 @@ export function Sidebar({ projects = [] }: { projects?: any[] }) {
       <nav className="flex flex-1 flex-col p-4 overflow-y-auto">
         <div className="flex flex-col gap-y-6">
           <div>
-            <div className="text-xs font-semibold text-muted-foreground mb-4 px-2 uppercase tracking-wider flex items-center gap-2">
-              AI Cloud <div className="h-px bg-border flex-1 ml-2"></div>
+            <div className={cn("text-xs font-semibold uppercase tracking-wider flex items-center gap-2 mb-4 px-2", 
+               isProjectContext ? "text-emerald-500" : "text-muted-foreground"
+            )}>
+              AI Cloud 
+              <div className={cn("h-px flex-1 ml-2", isProjectContext ? "bg-gradient-to-r from-emerald-500 to-cyan-400" : "bg-border")}></div>
             </div>
             
             <Button asChild className="mb-4 w-full justify-start gap-2 bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary border border-primary/20">
@@ -82,6 +86,14 @@ export function Sidebar({ projects = [] }: { projects?: any[] }) {
                 <PlusCircle className="h-4 w-4" /> Nueva App
               </Link>
             </Button>
+
+            {isProjectContext && (
+              <Button asChild variant="ghost" className="mb-4 w-full justify-start gap-2 text-muted-foreground hover:text-foreground">
+                <Link href="/projects">
+                  <ArrowLeft className="h-4 w-4" /> Todos los proyectos
+                </Link>
+              </Button>
+            )}
 
             {!isProjectContext && (
               <ul role="list" className="flex flex-1 flex-col gap-y-1">

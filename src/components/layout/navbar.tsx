@@ -37,12 +37,12 @@ export function Navbar({ projects = [], organization = "Personal" }: { projects?
       {/* LEFT: Contextual Breadcrumb & Switcher */}
       <div className="flex items-center gap-2">
         {/* Organization Name */}
-        <div className="flex items-center gap-2 px-2 py-1.5 text-sm font-medium text-foreground rounded-md hover:bg-muted transition-colors cursor-pointer">
+        <Link href="/projects" className="flex items-center gap-2 px-2 py-1.5 text-sm font-medium text-foreground rounded-md hover:bg-muted transition-colors cursor-pointer">
           <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center text-[10px] text-primary">
             {organization.charAt(0).toUpperCase()}
           </div>
           <span>{organization}</span>
-        </div>
+        </Link>
 
         <span className="text-muted-foreground/50">/</span>
 
