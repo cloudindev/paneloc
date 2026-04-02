@@ -13,7 +13,7 @@ export function DeploymentsList({ resource, initialDeployments, initialDebug }: 
   const [page, setPage] = React.useState(1)
   const router = useRouter()
   const config = resource.config as any
-  const itemsPerPage = 25
+  const itemsPerPage = 20
 
   const hasActiveDeployment = deployments.some(d => d.status === 'in_progress' || d.status === 'queued')
 
@@ -140,8 +140,7 @@ export function DeploymentsList({ resource, initialDeployments, initialDebug }: 
                 ))}
               </tbody>
             </table>
-            {/* Renderizar siempre el pie de paginación si hay registros, para que el usuario sepa que está activa */}
-            {deployments.length > 0 && (
+            {deployments.length > itemsPerPage && (
               <div className="flex items-center justify-between px-4 py-3 border-t border-border/50 bg-muted/20">
                 <div className="text-xs text-muted-foreground">
                   Mostrando {deployments.length === 0 ? 0 : (page - 1) * itemsPerPage + 1} a {Math.min(page * itemsPerPage, deployments.length)} de {deployments.length} despliegues
