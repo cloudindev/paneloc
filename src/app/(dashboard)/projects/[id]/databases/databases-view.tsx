@@ -141,28 +141,95 @@ function DatabaseSquareCard({ db, handleDeleteDb, isDeleting, onOpenDetail }: an
 function DatabaseDetailView({ db, initialView, onBack }: { db: any, initialView: 'sql' | 'tables', onBack: () => void }) {
   const [activeView, setActiveView] = React.useState<'sql' | 'tables' | 'columns'>(initialView);
   const [selectedTable, setSelectedTable] = React.useState<string | null>(null);
+  
+  const [tables, setTables] = React.useState<any[]>([]);
+  const [columns, setColumns] = React.useState<any[]>([]);
+  const [loadingTables, setLoadingTables] = React.useState(true);
+  const [loadingColumns, setLoadingColumns] = React.useState(false);
 
-  const handleTableClick = (tableName: string) => {
+  React.useEffect(() => {
+    async function loadTables() {
+       setLoadingTables(true);
+       try {
+         const query = `
+            SELECT 
+                t.table_name as name, 
+                c.columns as columns, 
+                COALESCE((SELECT reltuples::bigint FROM pg_class WHERE relname = t.table_name), 0) as rows,
+                pg_size_pretty(pg_relation_size('"' || t.table_name || '"')) as size
+            FROM 
+                information_schema.tables t
+            LEFT JOIN (
+                SELECT table_name, count(*) as columns 
+                FROM information_schema.columns 
+                WHERE table_schema = 'public' 
+                GROUP BY table_name
+            ) c ON t.table_name = c.table_name
+            WHERE 
+                t.table_schema = 'public' 
+                AND t.table_type = 'BASE TABLE'
+            ORDER BY t.table_name;
+         `;
+         const res = await executeDatabaseQuery(db.id, query);
+         if (res && res.success && res.rows) {
+            setTables(res.rows.map((r: any) => ({
+               ...r,
+               realtime: false // We leave false as it requires deeper supabase inspection
+            })));
+         }
+       } catch (error) {
+         console.error("Error loading tables:", error);
+       } finally {
+         setLoadingTables(false);
+       }
+    }
+    loadTables();
+  }, [db.id]);
+
+  const handleTableClick = async (tableName: string) => {
     setSelectedTable(tableName);
     setActiveView('columns');
+    setLoadingColumns(true);
+    setColumns([]);
+    
+    try {
+      const query = `
+         SELECT 
+             c.column_name as name, 
+             c.data_type as type,
+             c.is_nullable as nullable,
+             (
+                 SELECT COUNT(*) > 0
+                 FROM information_schema.table_constraints tc 
+                 JOIN information_schema.constraint_column_usage AS ccu USING (constraint_schema, constraint_name) 
+                 WHERE tc.constraint_type = 'PRIMARY KEY' 
+                 AND tc.table_schema = c.table_schema 
+                 AND tc.table_name = c.table_name 
+                 AND ccu.column_name = c.column_name
+             ) as is_primary
+         FROM 
+             information_schema.columns c
+         WHERE 
+             c.table_schema = 'public' 
+             AND c.table_name = '${tableName}'
+         ORDER BY c.ordinal_position;
+      `;
+      const res = await executeDatabaseQuery(db.id, query);
+      if (res && res.success && res.rows) {
+         setColumns(res.rows.map((r: any) => ({
+            name: r.name,
+            type: r.type,
+            primary: r.is_primary === true || r.is_primary === 't' || r.is_primary === 'true',
+            nullable: r.nullable === 'YES',
+            icon: r.type.includes('timestamp') || r.type.includes('date') ? 'C' : 'T'
+         })));
+      }
+    } catch (error) {
+      console.error("Error loading columns:", error);
+    } finally {
+      setLoadingColumns(false);
+    }
   };
-
-  const MOCK_TABLES = [
-    { name: "countries", columns: 3, rows: 1, size: "24 kB", realtime: false },
-    { name: "favorites", columns: 4, rows: 1413, size: "360 kB", realtime: false },
-    { name: "listings", columns: 18, rows: 1029, size: "768 kB", realtime: false },
-    { name: "magazine_posts", columns: 11, rows: 9, size: "232 kB", realtime: false },
-    { name: "messages", columns: 7, rows: 3309, size: "752 kB", realtime: true },
-    { name: "municipalities", columns: 4, rows: 8124, size: "728 kB", realtime: false },
-    { name: "provinces", columns: 4, rows: 52, size: "24 kB", realtime: false },
-    { name: "users", columns: 26, rows: 1801, size: "608 kB", realtime: false },
-  ];
-
-  const MOCK_COLUMNS = [
-    { name: "id", type: "varchar", primary: true, nullable: false, icon: "T" },
-    { name: "name", type: "varchar", primary: false, nullable: false, icon: "T" },
-    { name: "created_at", type: "timestamptz", primary: false, nullable: true, icon: "C" },
-  ];
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -233,7 +300,20 @@ function DatabaseDetailView({ db, initialView, onBack }: { db: any, initialView:
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/20 text-[13px]">
-                    {MOCK_TABLES.map((table, idx) => (
+                    {loadingTables ? (
+                      <tr>
+                        <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
+                           <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
+                           Cargando tablas...
+                        </td>
+                      </tr>
+                    ) : tables.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
+                           No hay tablas en la base de datos.
+                        </td>
+                      </tr>
+                    ) : tables.map((table, idx) => (
                       <tr key={idx} className="hover:bg-muted/10 transition-colors group">
                         <td className="px-6 py-4">
                            <div className="flex items-center gap-3 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => handleTableClick(table.name)}>
@@ -271,7 +351,7 @@ function DatabaseDetailView({ db, initialView, onBack }: { db: any, initialView:
                </table>
              </div>
              <div className="px-6 py-3 border-t border-border/50 bg-muted/5 text-xs text-muted-foreground">
-                {MOCK_TABLES.length} tables
+                {!loadingTables && `${tables.length} tables`}
              </div>
           </div>
         </div>
@@ -305,7 +385,20 @@ function DatabaseDetailView({ db, initialView, onBack }: { db: any, initialView:
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/20 text-[13px]">
-                       {MOCK_COLUMNS.map((col, idx) => (
+                       {loadingColumns ? (
+                          <tr>
+                            <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
+                               <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
+                               Cargando columnas...
+                            </td>
+                          </tr>
+                       ) : columns.length === 0 ? (
+                          <tr>
+                            <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
+                               No hay columnas para mostrar.
+                            </td>
+                          </tr>
+                       ) : columns.map((col, idx) => (
                           <tr key={idx} className="hover:bg-muted/10 transition-colors group">
                              <td className="px-6 py-4">
                                 <div className="flex items-center gap-3 font-medium text-foreground">
@@ -350,7 +443,7 @@ function DatabaseDetailView({ db, initialView, onBack }: { db: any, initialView:
                  </table>
                </div>
                <div className="px-6 py-3 border-t border-border/50 bg-muted/5 text-xs text-muted-foreground">
-                  {MOCK_COLUMNS.length} columns
+                  {!loadingColumns && `${columns.length} columns`}
                </div>
             </div>
         </div>
