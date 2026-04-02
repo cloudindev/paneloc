@@ -6,6 +6,7 @@ import { CloudLightning, ArrowRight, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import OlaLogo from "@/components/OlaLogo"
 
 import { loginAction } from "@/app/actions/auth"
 
@@ -33,24 +34,8 @@ export default function LoginPage() {
   return (
     <div className="w-full max-w-md">
       <div className="mb-8 flex flex-col items-center justify-center space-y-2">
-        <Link href="https://olacloud.es" className="group relative flex items-center justify-center w-[160px] h-[52px]">
-          {/* Logo principal en su estado base (blanco) */}
-          <img 
-            src="/ola-logo.png" 
-            alt="OLA CLOUD" 
-            className="object-contain w-full h-full"
-          />
-          {/* Capa Mágica Superpuesta (Se revela al hacer el Hover) */}
-          <div 
-            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 logo-shimmer"
-            style={{
-              WebkitMaskImage: 'url(/ola-logo.png)',
-              WebkitMaskSize: 'contain',
-              WebkitMaskRepeat: 'no-repeat',
-              WebkitMaskPosition: 'center',
-              clipPath: 'polygon(34.5% 0%, 100% 0%, 100% 100%, 39.5% 100%)'
-            }}
-          />
+        <Link href="https://olacloud.es" className="flex items-center justify-center">
+          <OlaLogo />
         </Link>
         <p className="text-sm text-muted-foreground">
           Premium infrastructure for your applications
