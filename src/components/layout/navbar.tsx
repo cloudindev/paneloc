@@ -33,7 +33,7 @@ export function Navbar({ projects = [], organization = "Personal" }: { projects?
   const filteredResources = projects.filter(r => r.name.toLowerCase().includes(searchQuery.toLowerCase()))
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-border bg-white/90 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
       {/* LEFT: Contextual Breadcrumb & Switcher */}
       <div className="flex items-center gap-2">
         {/* Organization Name */}

@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import OlaLogo from "@/components/OlaLogo"
 
 const globalNavigation = [
   { name: 'Proyectos', href: '/projects', icon: FolderGit2 },
@@ -48,26 +49,10 @@ export function Sidebar({ projects = [] }: { projects?: any[] }) {
   ]
 
   return (
-    <div className="flex w-64 flex-col border-r border-border bg-card/50 backdrop-blur-xl">
+    <div className="flex w-64 flex-col border-r border-border bg-[#F0EFEA] backdrop-blur-xl">
       <div className="flex h-16 shrink-0 items-center px-6">
-        <Link href="/" className="group relative flex items-center justify-center w-[120px] h-[42px]">
-          {/* Logo principal en su estado base (blanco) */}
-          <img 
-            src="/ola-logo.png" 
-            alt="OLA CLOUD" 
-            className="object-contain w-full h-full"
-          />
-          {/* Capa Mágica Superpuesta (Se revela al hacer el Hover) */}
-          <div 
-            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 logo-shimmer"
-            style={{
-              WebkitMaskImage: 'url(/ola-logo.png)',
-              WebkitMaskSize: 'contain',
-              WebkitMaskRepeat: 'no-repeat',
-              WebkitMaskPosition: 'center',
-              clipPath: 'polygon(34.5% 0%, 100% 0%, 100% 100%, 39.5% 100%)'
-            }}
-          />
+        <Link href="/">
+          <OlaLogo />
         </Link>
       </div>
       

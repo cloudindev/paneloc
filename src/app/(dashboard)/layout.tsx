@@ -15,7 +15,7 @@ export default async function DashboardLayout({
       <Sidebar projects={resources} />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Navbar projects={resources} organization={organizationName} />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-muted/20">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-[#FAFAFA]">
           <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
             {children}
           </div>
