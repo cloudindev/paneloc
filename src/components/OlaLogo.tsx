@@ -1,15 +1,11 @@
-import Image from 'next/image';
-
 export default function OlaLogo() {
   return (
-    <div className="w-[120px] h-[40px] relative shrink-0 group">
+    <div className="w-[160px] h-[52px] relative shrink-0 group flex items-center">
       {/* Base Logo - Clean */}
-      <Image 
+      <img 
         src="/olacloud-logo.png" 
         alt="OLA Logo" 
-        fill
-        className="object-contain object-left relative z-10 transition-all duration-300" 
-        priority
+        className="object-contain w-full h-full object-left relative z-10 transition-all duration-300"
       />
       
       {/* Holographic sweep strictly clamped to the right side (\CLOUD) */}
