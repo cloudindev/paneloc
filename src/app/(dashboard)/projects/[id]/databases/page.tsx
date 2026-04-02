@@ -2,6 +2,8 @@ import { redirect } from "next/navigation"
 import { getResourceById, getProjectDatabases } from "@/app/actions/projects"
 import { DatabasesView } from "./databases-view"
 
+import { Suspense } from "react"
+
 export default async function ProjectDatabasesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const project = await getResourceById(id)
@@ -22,7 +24,9 @@ export default async function ProjectDatabasesPage({ params }: { params: Promise
         </p>
       </div>
 
-      <DatabasesView resource={project} initialDatabases={databases} />
+      <Suspense fallback={<div className="animate-pulse h-64 bg-muted/20 rounded-md" />}>
+        <DatabasesView resource={project} initialDatabases={databases} />
+      </Suspense>
     </div>
   )
 }

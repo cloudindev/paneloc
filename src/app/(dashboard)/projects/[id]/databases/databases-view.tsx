@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Database, Server, ChevronRight, CheckCircle2, Loader2, ArrowLeft, DownloadCloud, Shield, Lock, Eye, EyeOff, Trash2, TerminalSquare, Play, Search, MoreVertical, KeyRound, CalendarDays, X } from "lucide-react"
 import { createCoolifyDatabase, deleteDatabaseFromCoolify, executeDatabaseQuery } from "@/app/actions/coolify"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
 
 function SqlConsole({ dbId }: { dbId: string }) {
   const [query, setQuery] = React.useState("")
@@ -261,7 +261,7 @@ function DatabaseDetailView({ db, initialView, onBack }: { db: any, initialView:
       </div>
 
       {activeView === 'sql' && (
-        <Card className="border-border/50 bg-card/60 backdrop-blur-md rounded-xl shadow-lg border-primary/20 overflow-hidden">
+        <Card className="bg-card/60 backdrop-blur-md rounded-xl shadow-sm overflow-hidden">
            <CardHeader className="py-3 px-4 border-b border-border/20 bg-muted/10">
               <CardTitle className="text-sm font-semibold flex items-center gap-2"><TerminalSquare className="h-4 w-4 text-emerald-500"/> Console</CardTitle>
            </CardHeader>
@@ -273,7 +273,7 @@ function DatabaseDetailView({ db, initialView, onBack }: { db: any, initialView:
 
       {activeView === 'tables' && (
         <div className="space-y-4 pb-12 animate-in fade-in duration-300">
-          <div className="flex flex-col sm:flex-row justify-between sm:items-center bg-card p-4 rounded-xl border border-border/50 shadow-sm gap-4">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center bg-card p-4 rounded-xl border shadow-sm gap-4">
              <h3 className="text-xl font-semibold tracking-tight flex items-center">
                  Database Tables
              </h3>
@@ -294,7 +294,7 @@ function DatabaseDetailView({ db, initialView, onBack }: { db: any, initialView:
              </div>
           </div>
           
-          <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden">
+          <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
              <div className="overflow-x-auto">
                <table className="w-full text-sm text-left">
                   <thead className="bg-muted/30 border-b border-border/50 text-[11px] text-muted-foreground/80 uppercase font-semibold tracking-wider">
@@ -388,7 +388,7 @@ function DatabaseDetailView({ db, initialView, onBack }: { db: any, initialView:
                </div>
             </div>
 
-            <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden">
+            <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
                <div className="overflow-x-auto">
                  <table className="w-full text-sm text-left">
                     <thead className="bg-muted/30 border-b border-border/50 text-[11px] text-muted-foreground/80 uppercase font-semibold tracking-wider">
@@ -499,6 +499,9 @@ const ENGINES = [
 
 export function DatabasesView({ resource, initialDatabases }: { resource: any, initialDatabases: any[] }) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
+  
   // 0: Browse existing / select engine to create, 1: Choose mode (Create vs Connect), 2: Form Create, 3: Deploying, 4: Success
   const [step, setStep] = React.useState(0)
   const [selectedEngine, setSelectedEngine] = React.useState<any>(null)
@@ -514,10 +517,26 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
   const [isDeploying, setIsDeploying] = React.useState(false)
   const [isDeleting, setIsDeleting] = React.useState<string | null>(null)
   
-  // Detalle DB activo
-  const [activeDbDetail, setActiveDbDetail] = React.useState<{ dbId: string, initialView: 'sql' | 'tables' } | null>(null)
-
+  // Detalle DB activo from URL
+  const detailDbId = searchParams.get('detailDb')
+  const detailViewMode = searchParams.get('view') as 'sql' | 'tables' | null
+  
   const [showCatalog, setShowCatalog] = React.useState(initialDatabases.length === 0)
+
+  // Derived state
+  const activeDbDetail = detailDbId ? { dbId: detailDbId, initialView: detailViewMode || 'tables' } : null
+
+  const handleOpenDetail = (dbId: string, view: 'sql' | 'tables') => {
+    const params = new URLSearchParams(searchParams)
+    params.set('detailDb', dbId)
+    params.set('view', view)
+    router.push(`${pathname}?${params.toString()}`)
+  }
+  
+  const handleCloseDetail = () => {
+    // Navigate strictly to the base pathname which resets searchParams fully
+    router.push(pathname)
+  }
 
   const handleEngineClick = (engine: any) => {
     if (!engine.enabled) return
@@ -579,8 +598,8 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
                <DatabaseDetailView 
                   key={targetDb.id} // para forzar remount si cambia
                   db={targetDb} 
-                  initialView={activeDbDetail.initialView} 
-                  onBack={() => setActiveDbDetail(null)} 
+                  initialView={activeDbDetail.initialView as any} 
+                  onBack={handleCloseDetail} 
                />
             )
          }
@@ -603,7 +622,7 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
                 db={db} 
                 handleDeleteDb={handleDeleteDb} 
                 isDeleting={isDeleting} 
-                onOpenDetail={(dbId: string, view: 'sql' | 'tables') => setActiveDbDetail({ dbId, initialView: view })}
+                onOpenDetail={handleOpenDetail}
               />
             ))}
           </div>
