@@ -72,7 +72,7 @@ export function ProjectDetailView({ initialResource }: { initialResource: any })
 
       {/* CONTENT AREA (General Overview Context) */}
       <div className="grid gap-6 md:grid-cols-2">
-        <Card className="bg-card/40 backdrop-blur-sm">
+        <Card className="bg-card/40 backdrop-blur-sm border-border/50">
           <CardHeader>
             <CardTitle className="text-lg">Producción</CardTitle>
             <CardDescription>Información del entorno principal</CardDescription>
@@ -103,7 +103,7 @@ export function ProjectDetailView({ initialResource }: { initialResource: any })
           </CardContent>
         </Card>
 
-        <Card className="bg-card/40 backdrop-blur-sm">
+        <Card className="bg-card/40 backdrop-blur-sm border-border/50">
           <CardHeader>
             <CardTitle className="text-lg">Repositorio Git</CardTitle>
             <CardDescription>Código fuente conectado</CardDescription>
