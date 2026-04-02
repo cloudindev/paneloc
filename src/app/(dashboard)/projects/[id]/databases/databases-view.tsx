@@ -95,7 +95,7 @@ function SqlConsole({ dbId }: { dbId: string }) {
   )
 }
 
-function DatabaseSquareCard({ db, handleDeleteDb, isDeleting, onOpenDetail }: any) {
+function DatabaseSquareCard({ db, handleDeleteDb, isDeleting, onOpenDetail, resourceName }: any) {
   return (
     <Card className="border-border/50 bg-card/40 backdrop-blur-sm relative group rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between aspect-square max-w-sm hover:border-primary/50 transition-colors">
       <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center gap-2">
@@ -115,7 +115,14 @@ function DatabaseSquareCard({ db, handleDeleteDb, isDeleting, onOpenDetail }: an
         </div>
         <div>
           <CardTitle className="text-xl tracking-tight disabled:opacity-50 font-semibold truncate">{db.name}</CardTitle>
-          <CardDescription className="text-sm mt-1">{db.config?.engine === "postgresql" ? "PostgreSQL Database" : "Database"}</CardDescription>
+          <CardDescription className="flex flex-col gap-2 text-sm mt-1">
+             <span>{db.config?.engine === "postgresql" ? "PostgreSQL Database" : "Database"}</span>
+             {resourceName && (
+                <span className="text-[11px] text-muted-foreground font-medium bg-muted/40 px-2.5 py-1.5 rounded-md w-fit border border-border/40 inline-flex items-center gap-1.5">
+                   Proyecto: <span className="text-foreground/90">{resourceName}</span>
+                </span>
+             )}
+          </CardDescription>
         </div>
       </CardHeader>
       <CardContent className="py-4 border-t border-border/20 bg-muted/5 flex flex-col justify-end gap-3 shrink-0">
@@ -623,6 +630,7 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
                 handleDeleteDb={handleDeleteDb} 
                 isDeleting={isDeleting} 
                 onOpenDetail={handleOpenDetail}
+                resourceName={resource.name}
               />
             ))}
           </div>

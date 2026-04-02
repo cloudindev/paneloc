@@ -10,8 +10,10 @@ import { useRouter } from "next/navigation"
 export function DeploymentsList({ resource, initialDeployments, initialDebug }: { resource: any, initialDeployments: any[], initialDebug?: string }) {
   const [deployments, setDeployments] = React.useState(initialDeployments)
   const [isDeploying, setIsDeploying] = React.useState(false)
+  const [page, setPage] = React.useState(1)
   const router = useRouter()
   const config = resource.config as any
+  const itemsPerPage = 25
 
   const hasActiveDeployment = deployments.some(d => d.status === 'in_progress' || d.status === 'queued')
 
@@ -116,7 +118,7 @@ export function DeploymentsList({ resource, initialDeployments, initialDebug }: 
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
-                {deployments.map((dep: any, idx: number) => (
+                {deployments.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((dep: any, idx: number) => (
                   <tr key={dep.deployment_uuid || dep.uuid || dep.id || idx} className="hover:bg-muted/30 transition-colors cursor-pointer group" onClick={() => router.push(`/projects/${resource.id}/logs?deployment=${dep.deployment_uuid || dep.uuid}`)}>
                     <td className="px-4 py-3">{getStatusBadge(dep.status)}</td>
                     <td className="px-4 py-3 min-w-[250px] max-w-[400px]">
@@ -138,6 +140,22 @@ export function DeploymentsList({ resource, initialDeployments, initialDebug }: 
                 ))}
               </tbody>
             </table>
+            
+            {deployments.length > itemsPerPage && (
+              <div className="flex items-center justify-between px-4 py-3 border-t border-border/50 bg-muted/20">
+                <div className="text-xs text-muted-foreground">
+                  Mostrando {(page - 1) * itemsPerPage + 1} a {Math.min(page * itemsPerPage, deployments.length)} de {deployments.length} despliegues
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setPage(page - 1)} disabled={page === 1} className="h-8 text-xs">
+                    Anterior
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setPage(page + 1)} disabled={page === Math.ceil(deployments.length / itemsPerPage)} className="h-8 text-xs">
+                    Siguiente
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </CardContent>
