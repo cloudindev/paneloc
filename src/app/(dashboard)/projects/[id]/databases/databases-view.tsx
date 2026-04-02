@@ -4,8 +4,9 @@ import * as React from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Database, Server, ChevronRight, CheckCircle2, Loader2, ArrowLeft, DownloadCloud, Shield, Lock, Eye, EyeOff, Trash2, TerminalSquare, Play, Search, MoreVertical, KeyRound, CalendarDays, X } from "lucide-react"
+import { Database, Server, ChevronRight, CheckCircle2, Loader2, ArrowLeft, DownloadCloud, Shield, Lock, Eye, EyeOff, Trash2, TerminalSquare, Play, Search, MoreVertical, KeyRound, CalendarDays, X, UploadCloud, FileUp } from "lucide-react"
 import { createCoolifyDatabase, deleteDatabaseFromCoolify, executeDatabaseQuery } from "@/app/actions/coolify"
+import { linkExternalDatabase } from "@/app/actions/projects"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
 
 function SqlConsole({ dbId }: { dbId: string }) {
@@ -521,6 +522,11 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
   const [isPublic, setIsPublic] = React.useState(false)
   const [connectionString, setConnectionString] = React.useState("")
   
+  // Link state
+  const [linkName, setLinkName] = React.useState("")
+  const [linkUri, setLinkUri] = React.useState("")
+  const [isLinking, setIsLinking] = React.useState(false)
+  
   const [isDeploying, setIsDeploying] = React.useState(false)
   const [isDeleting, setIsDeleting] = React.useState<string | null>(null)
   
@@ -562,6 +568,25 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
       router.refresh()
     } else {
       alert("Error eliminando base de datos: " + res.error)
+    }
+  }
+
+  const handleLink = async () => {
+    if (!linkName || !linkUri) return
+    setIsLinking(true)
+    
+    const res = await linkExternalDatabase(resource.projectId, resource.id, {
+      name: linkName,
+      uri: linkUri,
+      engine: selectedEngine!.id
+    })
+
+    setIsLinking(false)
+    if (res.success) {
+      setStep(0)
+      router.refresh()
+    } else {
+      alert("Error al enlazar base de datos: " + res.error)
     }
   }
 
@@ -710,7 +735,7 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
            </div>
          </div>
 
-         <div className="grid sm:grid-cols-2 gap-4">
+         <div className="grid sm:grid-cols-3 gap-4">
             <Card className="hover:border-primary/50 cursor-pointer transition-colors group bg-card hover:bg-card/80" onClick={() => setStep(2)}>
               <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -718,19 +743,31 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg mb-1">Crear Nueva</h3>
-                  <p className="text-sm text-muted-foreground">Desplegaremos una instancia virgen dedicada y segura de {selectedEngine.name} en el servidor VM101.</p>
+                  <p className="text-sm text-muted-foreground">Desplegar instancia virgen dedicada.</p>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="hover:border-primary/50 cursor-pointer transition-colors group bg-card hover:bg-card/80" onClick={() => alert("Función de enlace externo en desarrollo.")}>
+            <Card className="hover:border-primary/50 cursor-pointer transition-colors group bg-card hover:bg-card/80" onClick={() => setStep(5)}>
               <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
                 <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <DownloadCloud className="w-6 h-6 text-emerald-500" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg mb-1">Enlazar Existente</h3>
-                  <p className="text-sm text-muted-foreground">Conecta mediante una URI de conexión una base de datos alojada en AWS, Supabase u otro proveedor.</p>
+                  <p className="text-sm text-muted-foreground">Conecta DB por URI (AWS, Supabase, etc).</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:border-primary/50 cursor-pointer transition-colors group bg-card hover:bg-card/80" onClick={() => setStep(6)}>
+              <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
+                <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <FileUp className="w-6 h-6 text-blue-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-1">Importar DB</h3>
+                  <p className="text-sm text-muted-foreground">Crear a partir de dump SQL o backup.</p>
                 </div>
               </CardContent>
             </Card>
@@ -878,6 +915,100 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
         <Button onClick={reset} variant="secondary" className="w-full mt-4">
           Cerrar y volver al Panel
         </Button>
+      </div>
+    )
+  }
+
+  {/* Vista para Enlazar Existente */}
+  if (step === 5) {
+    const Icon = selectedEngine!.icon
+    return (
+       <div className="max-w-2xl mx-auto animate-in slide-in-from-right-8 duration-500">
+          <Button variant="ghost" className="mb-6 text-muted-foreground hover:text-foreground pl-0 group" onClick={() => setStep(1)} disabled={isLinking}>
+           <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+           Volver atrás
+         </Button>
+
+         <Card className="border-border/50 bg-card/40 backdrop-blur-sm overflow-hidden">
+           <CardHeader className="border-b border-border/20 bg-muted/10">
+             <div className="flex items-center gap-3">
+               <div className={`w-8 h-8 rounded-lg flex items-center justify-center border ${selectedEngine!.color}`}>
+                  <DownloadCloud className="w-4 h-4 text-emerald-500" />
+               </div>
+               <div>
+                  <CardTitle className="text-lg">Enlazar Base de Datos Existente</CardTitle>
+                  <CardDescription>Integrar una base externa accesible públicamente.</CardDescription>
+               </div>
+             </div>
+           </CardHeader>
+
+           <CardContent className="p-6 space-y-6">
+             <div className="space-y-4">
+               <div className="space-y-2">
+                 <label className="text-sm font-medium">Nombre de Referencia</label>
+                 <Input 
+                   value={linkName} 
+                   onChange={e => setLinkName(e.target.value)} 
+                   placeholder="Mi DB AWS"
+                   className="bg-background/50"
+                 />
+                 <p className="text-xs text-muted-foreground">El identificador interno con el que aparecerá en el panel.</p>
+               </div>
+
+               <div className="space-y-2">
+                 <label className="text-sm font-medium">Cadena de Conexión (URI)</label>
+                 <Input 
+                   type="password"
+                   value={linkUri} 
+                   onChange={e => setLinkUri(e.target.value)} 
+                   placeholder="postgres://user:password@host:5432/dbname"
+                   className="bg-background/50 font-mono text-sm"
+                 />
+                 <p className="text-xs text-muted-foreground">URI válida tipo postgres:// o mysql://.</p>
+               </div>
+             </div>
+           </CardContent>
+
+           <CardFooter className="p-6 pt-0 flex justify-end">
+             <Button 
+               size="lg" 
+               className="gap-2 font-medium bg-emerald-600 hover:bg-emerald-700 text-white" 
+               onClick={handleLink}
+               disabled={!linkName || !linkUri || isLinking}
+             >
+               {isLinking ? <Loader2 className="w-4 h-4 animate-spin" /> : <DownloadCloud className="w-4 h-4" />}
+               {isLinking ? "Conectando..." : "Conectar Base de Datos"}
+             </Button>
+           </CardFooter>
+         </Card>
+      </div>
+    )
+  }
+
+  {/* Vista para Importar SQL */}
+  if (step === 6) {
+    const Icon = selectedEngine!.icon
+    return (
+       <div className="max-w-2xl mx-auto animate-in slide-in-from-right-8 duration-500">
+          <Button variant="ghost" className="mb-6 text-muted-foreground hover:text-foreground pl-0 group" onClick={() => setStep(1)}>
+           <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+           Volver atrás
+         </Button>
+
+         <Card className="border-border/50 bg-card/40 backdrop-blur-sm overflow-hidden text-center py-12">
+           <CardContent className="flex flex-col items-center justify-center space-y-4">
+              <div className="w-16 h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center hover:scale-105 transition-transform duration-300">
+                <FileUp className="w-8 h-8 text-blue-500" />
+              </div>
+              <h2 className="text-2xl font-bold mt-4">Importar DB Próximamente</h2>
+              <p className="text-muted-foreground max-w-sm">
+                Estamos terminando el importador que te permitirá subir tu archivo .SQL para desplegar e hidratar la base de datos en un solo paso.
+              </p>
+              <Button variant="outline" className="mt-4" onClick={() => setStep(1)}>
+                Entendido
+              </Button>
+           </CardContent>
+         </Card>
       </div>
     )
   }

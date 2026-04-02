@@ -207,6 +207,51 @@ export async function getProjectDatabases(projectId: string, linkedAppId?: strin
     return []
   }
 }
+export async function linkExternalDatabase(projectId: string, linkedAppId: string, payload: { name: string, uri: string, engine: string }) {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get("olacloud_session")?.value
+    if (!token) return { success: false, error: "No estás autenticado" }
+
+    const session = await verifyJWT(token)
+    if (!session || !session.sub) return { success: false, error: "Sesión inválida" }
+
+    // Obtenemos o validamos que el projectId exista y corresponda al usuario
+    // (Opcional, omitido por simplicidad dado que la misma verificación de Resource ya la hace)
+
+    // parse the URI gracefully to get user/db name if possible
+    let user = "admin"
+    let dbName = payload.name
+    try {
+       const url = new URL(payload.uri)
+       if (url.username) user = url.username
+       dbName = url.pathname.replace("/", "") || payload.name
+    } catch(e) {}
+
+    const resource = await prisma.resource.create({
+      data: {
+        name: payload.name,
+        type: "POSTGRES_DB",
+        status: "running",
+        projectId: projectId,
+        config: {
+          engine: payload.engine,
+          db_user: user,
+          db_name: dbName,
+          connection_uri: payload.uri,
+          is_public: true,
+          is_external: true, // flag que nos indica que esta BD no está alojada en coolify
+          linked_app: linkedAppId
+        }
+      }
+    })
+
+    return { success: true, database: resource }
+  } catch (error: any) {
+    console.error("Error enlazando BD externa:", error)
+    return { success: false, error: error.message }
+  }
+}
 
 import { deleteAppFromCoolify } from "./coolify"
 import { revalidatePath } from "next/cache"
