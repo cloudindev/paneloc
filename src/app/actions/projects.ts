@@ -173,7 +173,7 @@ export async function getResourceById(id: string) {
   }
 }
 
-export async function getProjectDatabases(projectId: string) {
+export async function getProjectDatabases(projectId: string, linkedAppId?: string) {
   try {
     const cookieStore = await cookies()
     const token = cookieStore.get("olacloud_session")?.value
@@ -191,10 +191,16 @@ export async function getProjectDatabases(projectId: string) {
     })
     
     // Config parsing
-    return resources.map((r: any) => ({
+    let dbs = resources.map((r: any) => ({
       ...r,
       config: typeof r.config === "string" ? JSON.parse(r.config) : r.config
     }))
+
+    if (linkedAppId) {
+      dbs = dbs.filter((db: any) => db.config?.linked_app === linkedAppId)
+    }
+
+    return dbs
 
   } catch (error) {
     console.error("Error obteniendo BDs:", error)

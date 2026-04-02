@@ -13,7 +13,7 @@ export default async function ProjectDatabasesPage({ params }: { params: Promise
   }
 
   // Fetch persisted databases from DB
-  const databases = await getProjectDatabases(project.projectId)
+  const databases = await getProjectDatabases(project.projectId, project.id)
 
   return (
     <div className="p-6">

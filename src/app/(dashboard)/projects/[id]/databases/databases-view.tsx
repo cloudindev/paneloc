@@ -575,7 +575,8 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
       name: dbName,
       user: dbUser,
       password: dbPassword,
-      isPublic
+      isPublic,
+      linkedAppId: resource.id
     })
     
     if (res.success && res.connectionString) {

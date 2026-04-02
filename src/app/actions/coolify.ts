@@ -532,7 +532,8 @@ export async function createCoolifyDatabase(projectId: string, payload: any) {
           db_name: payload.name,
           connection_uri: connectionUri,
           is_public: !!payload.isPublic,
-          coolify_server: COOLIFY_SERVER_UUID
+          coolify_server: COOLIFY_SERVER_UUID,
+          linked_app: payload.linkedAppId || null
         }
       }
     })
