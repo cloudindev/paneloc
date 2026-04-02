@@ -95,8 +95,51 @@ function SqlConsole({ dbId }: { dbId: string }) {
   )
 }
 
-function DatabaseCardItem({ db, handleDeleteDb, isDeleting }: any) {
-  const [activeView, setActiveView] = React.useState<'overview' | 'sql' | 'tables' | 'columns'>('overview');
+function DatabaseSquareCard({ db, handleDeleteDb, isDeleting, onOpenDetail }: any) {
+  return (
+    <Card className="border-border/50 bg-card/40 backdrop-blur-sm relative group rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between aspect-square max-w-sm hover:border-primary/50 transition-colors">
+      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center gap-2">
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => handleDeleteDb(db.id, db.config?.coolify_uuid)} disabled={isDeleting === db.id}>
+            {isDeleting === db.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+          </Button>
+      </div>
+      <CardHeader className="py-6 flex-1">
+        <div className="flex justify-between items-start mb-4">
+          <div className="w-14 h-14 rounded-xl text-blue-400 bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shadow-sm">
+            <Database className="w-7 h-7 outline-none" />
+          </div>
+          <span className="text-[11px] bg-emerald-500/10 text-emerald-500 px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5 border border-emerald-500/20">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite]" />
+            {db.status === "running" ? "Running" : db.status}
+          </span>
+        </div>
+        <div>
+          <CardTitle className="text-xl tracking-tight disabled:opacity-50 font-semibold truncate">{db.name}</CardTitle>
+          <CardDescription className="text-sm mt-1">{db.config?.engine === "postgresql" ? "PostgreSQL Database" : "Database"}</CardDescription>
+        </div>
+      </CardHeader>
+      <CardContent className="py-4 border-t border-border/20 bg-muted/5 flex flex-col justify-end gap-3 shrink-0">
+        <div className="space-y-1.5 w-full">
+          <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest pl-1">Internal URL</span>
+          <code className="block w-full overflow-hidden text-ellipsis whitespace-nowrap text-[12px] bg-black/60 px-3 py-2 rounded-md border border-border/10 text-emerald-400/90 font-mono shadow-inner">
+            {db.config?.connection_uri || "N/A"}
+          </code>
+        </div>
+        <div className="grid grid-cols-2 gap-3 w-full">
+          <Button variant="secondary" className="gap-2 rounded-lg transition-all w-full" onClick={() => onOpenDetail(db.id, 'sql')}>
+            <TerminalSquare className="w-4 h-4" /> Editor SQL
+          </Button>
+          <Button variant="secondary" className="gap-2 rounded-lg transition-all w-full" onClick={() => onOpenDetail(db.id, 'tables')}>
+            <Database className="w-4 h-4" /> Tablas
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function DatabaseDetailView({ db, initialView, onBack }: { db: any, initialView: 'sql' | 'tables', onBack: () => void }) {
+  const [activeView, setActiveView] = React.useState<'sql' | 'tables' | 'columns'>(initialView);
   const [selectedTable, setSelectedTable] = React.useState<string | null>(null);
 
   const handleTableClick = (tableName: string) => {
@@ -122,54 +165,35 @@ function DatabaseCardItem({ db, handleDeleteDb, isDeleting }: any) {
   ];
 
   return (
-    <div className="flex flex-col gap-6 animate-in fade-in duration-300">
-      {/* Overview Card */}
-      <Card className="border-border/50 bg-card/40 backdrop-blur-sm relative group rounded-xl overflow-hidden shadow-sm">
-        <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => handleDeleteDb(db.id, db.config?.coolify_uuid)} disabled={isDeleting === db.id}>
-              {isDeleting === db.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-            </Button>
-        </div>
-        <CardHeader className="py-5">
-          <div className="flex justify-between items-center pr-12">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-lg text-blue-400 bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shadow-sm">
-                <Database className="w-6 h-6 outline-none" />
-              </div>
-              <div>
-                <CardTitle className="text-xl tracking-tight disabled:opacity-50 font-semibold">{db.name}</CardTitle>
-                <CardDescription className="text-[13px]">{db.config?.engine === "postgresql" ? "PostgreSQL Database" : "Database"}</CardDescription>
-              </div>
-            </div>
-            <span className="text-xs bg-emerald-500/10 text-emerald-500 px-3 py-1 rounded-full font-medium flex items-center gap-1.5 border border-emerald-500/20">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite]" />
-              {db.status === "running" ? "Running" : db.status}
-            </span>
-          </div>
-        </CardHeader>
-        <CardContent className="py-4 border-t border-border/20 bg-muted/5 space-y-4">
-          <div className="space-y-1.5">
-            <span className="text-[11px] text-muted-foreground font-semibold uppercase tracking-widest pl-1">Internal URL</span>
-            <code className="block w-full overflow-x-auto text-[13px] bg-black/60 px-4 py-3 rounded-md border border-border/10 focus:outline-none focus:ring-1 focus:ring-primary/50 text-emerald-400/90 font-mono shadow-inner">
-              {db.config?.connection_uri || "N/A"}
-            </code>
-          </div>
-          <div className="flex items-center gap-3 pt-2">
-            <Button variant={activeView === 'sql' ? 'default' : 'secondary'} className="gap-2 rounded-lg transition-all" onClick={() => setActiveView(activeView === 'sql' ? 'overview' : 'sql')}>
-              <TerminalSquare className="w-4 h-4" /> Editor SQL
-            </Button>
-            <Button variant={activeView === 'tables' || activeView === 'columns' ? 'default' : 'secondary'} className="gap-2 rounded-lg transition-all" onClick={() => setActiveView(activeView === 'tables' ? 'overview' : 'tables')}>
-              <Database className="w-4 h-4" /> Tablas
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
+      <div className="flex items-center gap-4 border-b border-border/50 pb-4">
+          <Button variant="ghost" onClick={onBack} className="gap-2 text-muted-foreground hover:text-foreground -ml-4">
+             <ArrowLeft className="w-5 h-5" /> Volver a Bases de datos
+          </Button>
+      </div>
+      
+      <div className="flex items-center gap-4 mb-2">
+         <div className="flex bg-muted p-1 rounded-lg border border-border/50 w-fit">
+            <button 
+               className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeView === 'sql' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+               onClick={() => setActiveView('sql')}
+            >
+               Editor SQL
+            </button>
+            <button 
+               className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeView === 'tables' || activeView === 'columns' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+               onClick={() => setActiveView('tables')}
+            >
+               Tablas
+            </button>
+         </div>
+         <h2 className="text-xl font-bold tracking-tight text-muted-foreground ml-2">/ {db.name}</h2>
+      </div>
 
-      {/* Dynamic View Below Card */}
       {activeView === 'sql' && (
-        <Card className="border-border/50 bg-card/60 backdrop-blur-md rounded-xl shadow-lg border-primary/20 animate-in fade-in slide-in-from-top-4 duration-300 overflow-hidden">
+        <Card className="border-border/50 bg-card/60 backdrop-blur-md rounded-xl shadow-lg border-primary/20 overflow-hidden">
            <CardHeader className="py-3 px-4 border-b border-border/20 bg-muted/10">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2"><TerminalSquare className="h-4 w-4 text-emerald-500"/> Editor SQL: {db.name}</CardTitle>
+              <CardTitle className="text-sm font-semibold flex items-center gap-2"><TerminalSquare className="h-4 w-4 text-emerald-500"/> Console</CardTitle>
            </CardHeader>
            <CardContent className="p-4 bg-muted/5">
              <SqlConsole dbId={db.id} />
@@ -178,14 +202,14 @@ function DatabaseCardItem({ db, handleDeleteDb, isDeleting }: any) {
       )}
 
       {activeView === 'tables' && (
-        <div className="animate-in fade-in slide-in-from-top-4 duration-300 space-y-4 pb-12">
+        <div className="space-y-4 pb-12 animate-in fade-in duration-300">
           <div className="flex flex-col sm:flex-row justify-between sm:items-center bg-card p-4 rounded-xl border border-border/50 shadow-sm gap-4">
              <h3 className="text-xl font-semibold tracking-tight flex items-center">
                  Database Tables
              </h3>
              <div className="flex flex-wrap items-center gap-3">
                 <div className="flex bg-muted rounded-md p-1 border border-border/50 items-center">
-                    <span className="px-3 py-1 text-xs text-muted-foreground cursor-pointer">schema</span>
+                    <span className="px-3 py-1 text-xs text-muted-foreground">schema</span>
                     <span className="bg-background rounded px-3 py-1 text-xs font-medium shadow-sm">public</span>
                 </div>
                 <div className="relative">
@@ -212,7 +236,7 @@ function DatabaseCardItem({ db, handleDeleteDb, isDeleting }: any) {
                     {MOCK_TABLES.map((table, idx) => (
                       <tr key={idx} className="hover:bg-muted/10 transition-colors group">
                         <td className="px-6 py-4">
-                           <div className="flex items-center gap-3 font-medium text-foreground">
+                           <div className="flex items-center gap-3 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => handleTableClick(table.name)}>
                               <Database className="w-4 h-4 text-muted-foreground/60" />
                               {table.name}
                            </div>
@@ -254,7 +278,7 @@ function DatabaseCardItem({ db, handleDeleteDb, isDeleting }: any) {
       )}
 
       {activeView === 'columns' && selectedTable && (
-        <div className="animate-in fade-in slide-in-from-right-8 duration-300 space-y-4 pb-12">
+        <div className="space-y-4 pb-12 animate-in slide-in-from-right-8 duration-300">
             <div className="flex items-center gap-2 mb-2">
                 <Button variant="ghost" size="sm" className="h-8 pl-0 text-muted-foreground hover:text-foreground" onClick={() => setActiveView('tables')}>
                    <ArrowLeft className="w-4 h-4 mr-1" /> Tables
@@ -379,7 +403,9 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
   
   const [isDeploying, setIsDeploying] = React.useState(false)
   const [isDeleting, setIsDeleting] = React.useState<string | null>(null)
-  const [activeConsole, setActiveConsole] = React.useState<string | null>(null)
+  
+  // Detalle DB activo
+  const [activeDbDetail, setActiveDbDetail] = React.useState<{ dbId: string, initialView: 'sql' | 'tables' } | null>(null)
 
   const [showCatalog, setShowCatalog] = React.useState(initialDatabases.length === 0)
 
@@ -436,6 +462,20 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
 
   if (step === 0) {
     if (!showCatalog && initialDatabases.length > 0) {
+      if (activeDbDetail) {
+         const targetDb = initialDatabases.find(d => d.id === activeDbDetail.dbId)
+         if (targetDb) {
+            return (
+               <DatabaseDetailView 
+                  key={targetDb.id} // para forzar remount si cambia
+                  db={targetDb} 
+                  initialView={activeDbDetail.initialView} 
+                  onBack={() => setActiveDbDetail(null)} 
+               />
+            )
+         }
+      }
+
       return (
         <div className="space-y-6">
           <div className="flex justify-between items-center mb-6">
@@ -446,13 +486,14 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
               <Database className="w-4 h-4" /> Añadir Base de Datos
             </Button>
           </div>
-          <div className="grid grid-cols-1 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-max">
             {initialDatabases.map((db: any) => (
-              <DatabaseCardItem 
+              <DatabaseSquareCard 
                 key={db.id} 
                 db={db} 
                 handleDeleteDb={handleDeleteDb} 
                 isDeleting={isDeleting} 
+                onOpenDetail={(dbId: string, view: 'sql' | 'tables') => setActiveDbDetail({ dbId, initialView: view })}
               />
             ))}
           </div>
