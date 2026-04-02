@@ -4,7 +4,7 @@ import * as React from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Database, Server, ChevronRight, CheckCircle2, Loader2, ArrowLeft, DownloadCloud, Shield, Lock, Eye, EyeOff, Trash2, TerminalSquare, Play } from "lucide-react"
+import { Database, Server, ChevronRight, CheckCircle2, Loader2, ArrowLeft, DownloadCloud, Shield, Lock, Eye, EyeOff, Trash2, TerminalSquare, Play, Search, MoreVertical, KeyRound, CalendarDays, X } from "lucide-react"
 import { createCoolifyDatabase, deleteDatabaseFromCoolify, executeDatabaseQuery } from "@/app/actions/coolify"
 import { useRouter } from "next/navigation"
 
@@ -45,7 +45,7 @@ function SqlConsole({ dbId }: { dbId: string }) {
       </div>
 
       {result && (
-        <div className="bg-black/20 rounded border border-border/20 overflow-hidden">
+        <div className="bg-black/20 rounded border border-border/20 overflow-hidden mt-4">
           {result.error ? (
             <div className="p-3 text-xs text-red-400 font-mono bg-red-500/10">
               Error: {result.error}
@@ -94,6 +94,247 @@ function SqlConsole({ dbId }: { dbId: string }) {
     </div>
   )
 }
+
+function DatabaseCardItem({ db, handleDeleteDb, isDeleting }: any) {
+  const [activeView, setActiveView] = React.useState<'overview' | 'sql' | 'tables' | 'columns'>('overview');
+  const [selectedTable, setSelectedTable] = React.useState<string | null>(null);
+
+  const handleTableClick = (tableName: string) => {
+    setSelectedTable(tableName);
+    setActiveView('columns');
+  };
+
+  const MOCK_TABLES = [
+    { name: "countries", columns: 3, rows: 1, size: "24 kB", realtime: false },
+    { name: "favorites", columns: 4, rows: 1413, size: "360 kB", realtime: false },
+    { name: "listings", columns: 18, rows: 1029, size: "768 kB", realtime: false },
+    { name: "magazine_posts", columns: 11, rows: 9, size: "232 kB", realtime: false },
+    { name: "messages", columns: 7, rows: 3309, size: "752 kB", realtime: true },
+    { name: "municipalities", columns: 4, rows: 8124, size: "728 kB", realtime: false },
+    { name: "provinces", columns: 4, rows: 52, size: "24 kB", realtime: false },
+    { name: "users", columns: 26, rows: 1801, size: "608 kB", realtime: false },
+  ];
+
+  const MOCK_COLUMNS = [
+    { name: "id", type: "varchar", primary: true, nullable: false, icon: "T" },
+    { name: "name", type: "varchar", primary: false, nullable: false, icon: "T" },
+    { name: "created_at", type: "timestamptz", primary: false, nullable: true, icon: "C" },
+  ];
+
+  return (
+    <div className="flex flex-col gap-6 animate-in fade-in duration-300">
+      {/* Overview Card */}
+      <Card className="border-border/50 bg-card/40 backdrop-blur-sm relative group rounded-xl overflow-hidden shadow-sm">
+        <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => handleDeleteDb(db.id, db.config?.coolify_uuid)} disabled={isDeleting === db.id}>
+              {isDeleting === db.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+            </Button>
+        </div>
+        <CardHeader className="py-5">
+          <div className="flex justify-between items-center pr-12">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg text-blue-400 bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shadow-sm">
+                <Database className="w-6 h-6 outline-none" />
+              </div>
+              <div>
+                <CardTitle className="text-xl tracking-tight disabled:opacity-50 font-semibold">{db.name}</CardTitle>
+                <CardDescription className="text-[13px]">{db.config?.engine === "postgresql" ? "PostgreSQL Database" : "Database"}</CardDescription>
+              </div>
+            </div>
+            <span className="text-xs bg-emerald-500/10 text-emerald-500 px-3 py-1 rounded-full font-medium flex items-center gap-1.5 border border-emerald-500/20">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite]" />
+              {db.status === "running" ? "Running" : db.status}
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent className="py-4 border-t border-border/20 bg-muted/5 space-y-4">
+          <div className="space-y-1.5">
+            <span className="text-[11px] text-muted-foreground font-semibold uppercase tracking-widest pl-1">Internal URL</span>
+            <code className="block w-full overflow-x-auto text-[13px] bg-black/60 px-4 py-3 rounded-md border border-border/10 focus:outline-none focus:ring-1 focus:ring-primary/50 text-emerald-400/90 font-mono shadow-inner">
+              {db.config?.connection_uri || "N/A"}
+            </code>
+          </div>
+          <div className="flex items-center gap-3 pt-2">
+            <Button variant={activeView === 'sql' ? 'default' : 'secondary'} className="gap-2 rounded-lg transition-all" onClick={() => setActiveView(activeView === 'sql' ? 'overview' : 'sql')}>
+              <TerminalSquare className="w-4 h-4" /> Editor SQL
+            </Button>
+            <Button variant={activeView === 'tables' || activeView === 'columns' ? 'default' : 'secondary'} className="gap-2 rounded-lg transition-all" onClick={() => setActiveView(activeView === 'tables' ? 'overview' : 'tables')}>
+              <Database className="w-4 h-4" /> Tablas
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Dynamic View Below Card */}
+      {activeView === 'sql' && (
+        <Card className="border-border/50 bg-card/60 backdrop-blur-md rounded-xl shadow-lg border-primary/20 animate-in fade-in slide-in-from-top-4 duration-300 overflow-hidden">
+           <CardHeader className="py-3 px-4 border-b border-border/20 bg-muted/10">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2"><TerminalSquare className="h-4 w-4 text-emerald-500"/> Editor SQL: {db.name}</CardTitle>
+           </CardHeader>
+           <CardContent className="p-4 bg-muted/5">
+             <SqlConsole dbId={db.id} />
+           </CardContent>
+        </Card>
+      )}
+
+      {activeView === 'tables' && (
+        <div className="animate-in fade-in slide-in-from-top-4 duration-300 space-y-4 pb-12">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center bg-card p-4 rounded-xl border border-border/50 shadow-sm gap-4">
+             <h3 className="text-xl font-semibold tracking-tight flex items-center">
+                 Database Tables
+             </h3>
+             <div className="flex flex-wrap items-center gap-3">
+                <div className="flex bg-muted rounded-md p-1 border border-border/50 items-center">
+                    <span className="px-3 py-1 text-xs text-muted-foreground cursor-pointer">schema</span>
+                    <span className="bg-background rounded px-3 py-1 text-xs font-medium shadow-sm">public</span>
+                </div>
+                <div className="relative">
+                   <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                   <Input placeholder="Search for a table..." className="pl-9 h-10 w-full sm:w-64 bg-background" />
+                </div>
+             </div>
+          </div>
+          
+          <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden">
+             <div className="overflow-x-auto">
+               <table className="w-full text-sm text-left">
+                  <thead className="bg-muted/30 border-b border-border/50 text-[11px] text-muted-foreground/80 uppercase font-semibold tracking-wider">
+                    <tr>
+                      <th className="px-6 py-4 font-medium">Name</th>
+                      <th className="px-6 py-4 font-medium">Columns</th>
+                      <th className="px-6 py-4 font-medium">Rows (Estimated)</th>
+                      <th className="px-6 py-4 font-medium">Size (Estimated)</th>
+                      <th className="px-6 py-4 font-medium">Realtime</th>
+                      <th className="px-6 py-4 text-right"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/20 text-[13px]">
+                    {MOCK_TABLES.map((table, idx) => (
+                      <tr key={idx} className="hover:bg-muted/10 transition-colors group">
+                        <td className="px-6 py-4">
+                           <div className="flex items-center gap-3 font-medium text-foreground">
+                              <Database className="w-4 h-4 text-muted-foreground/60" />
+                              {table.name}
+                           </div>
+                        </td>
+                        <td className="px-6 py-4 text-muted-foreground">{table.columns}</td>
+                        <td className="px-6 py-4 text-muted-foreground">{table.rows}</td>
+                        <td className="px-6 py-4 text-muted-foreground">{table.size}</td>
+                        <td className="px-6 py-4">
+                           {table.realtime ? (
+                              <span className="flex items-center gap-1.5 text-emerald-500 font-medium">
+                                 <CheckCircle2 className="w-3.5 h-3.5" /> Enabled
+                              </span>
+                           ) : (
+                              <span className="flex items-center gap-1.5 text-muted-foreground/70">
+                                 <X className="w-3.5 h-3.5" /> Disabled
+                              </span>
+                           )}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                           <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button variant="outline" size="sm" className="h-8 shadow-sm text-xs" onClick={() => handleTableClick(table.name)}>
+                                 View columns
+                              </Button>
+                              <Button variant="outline" size="icon" className="h-8 w-8 shadow-sm">
+                                 <MoreVertical className="w-3.5 h-3.5 text-muted-foreground" />
+                              </Button>
+                           </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+               </table>
+             </div>
+             <div className="px-6 py-3 border-t border-border/50 bg-muted/5 text-xs text-muted-foreground">
+                {MOCK_TABLES.length} tables
+             </div>
+          </div>
+        </div>
+      )}
+
+      {activeView === 'columns' && selectedTable && (
+        <div className="animate-in fade-in slide-in-from-right-8 duration-300 space-y-4 pb-12">
+            <div className="flex items-center gap-2 mb-2">
+                <Button variant="ghost" size="sm" className="h-8 pl-0 text-muted-foreground hover:text-foreground" onClick={() => setActiveView('tables')}>
+                   <ArrowLeft className="w-4 h-4 mr-1" /> Tables
+                </Button>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-4 mb-4">
+               <h2 className="text-3xl font-bold tracking-tight">{selectedTable}</h2>
+               <div className="relative w-full sm:w-64">
+                   <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                   <Input placeholder="Filter columns" className="pl-9 bg-card h-10" />
+               </div>
+            </div>
+
+            <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden">
+               <div className="overflow-x-auto">
+                 <table className="w-full text-sm text-left">
+                    <thead className="bg-muted/30 border-b border-border/50 text-[11px] text-muted-foreground/80 uppercase font-semibold tracking-wider">
+                      <tr>
+                        <th className="px-6 py-4 font-medium w-64">Name</th>
+                        <th className="px-6 py-4 font-medium w-48">Type</th>
+                        <th className="px-6 py-4 font-medium">Constraints</th>
+                        <th className="px-6 py-4 text-right"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/20 text-[13px]">
+                       {MOCK_COLUMNS.map((col, idx) => (
+                          <tr key={idx} className="hover:bg-muted/10 transition-colors group">
+                             <td className="px-6 py-4">
+                                <div className="flex items-center gap-3 font-medium text-foreground">
+                                  <span className="text-muted-foreground/40 font-serif italic text-lg leading-none w-5 text-center">
+                                    {col.icon === 'C' ? <CalendarDays className="w-4 h-4 inline-block" /> : 'T'}
+                                  </span> 
+                                  {col.name}
+                                </div>
+                             </td>
+                             <td className="px-6 py-4 text-muted-foreground font-mono text-[12px]">{col.type}</td>
+                             <td className="px-6 py-4">
+                                <div className="flex flex-wrap gap-2">
+                                    {col.primary && (
+                                       <span className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-500/30 text-emerald-500 bg-emerald-500/5 uppercase tracking-wide">
+                                          <KeyRound className="w-3 h-3" /> Primary
+                                       </span>
+                                    )}
+                                    {col.nullable ? (
+                                        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-border/50 text-muted-foreground bg-muted/20 tracking-wide">
+                                           <span className="w-2 h-2 rounded-sm border border-muted-foreground/50 rotate-45 inline-block" /> Nullable
+                                        </span>
+                                    ) : (
+                                        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-border/50 text-foreground/80 bg-muted/40 tracking-wide">
+                                           <span className="w-2 h-2 rounded-sm bg-muted-foreground/80 rotate-45 inline-block" /> Non-nullable
+                                        </span>
+                                    )}
+                                </div>
+                             </td>
+                             <td className="px-6 py-4 text-right">
+                                 <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Button variant="outline" size="sm" className="h-8 shadow-sm text-xs px-4">
+                                       Edit
+                                    </Button>
+                                    <Button variant="outline" size="icon" className="h-8 w-8 shadow-sm">
+                                       <MoreVertical className="w-3.5 h-3.5 text-muted-foreground" />
+                                    </Button>
+                                 </div>
+                             </td>
+                          </tr>
+                       ))}
+                    </tbody>
+                 </table>
+               </div>
+               <div className="px-6 py-3 border-t border-border/50 bg-muted/5 text-xs text-muted-foreground">
+                  {MOCK_COLUMNS.length} columns
+               </div>
+            </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 
 const ENGINES = [
   {
@@ -205,56 +446,14 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
               <Database className="w-4 h-4" /> Añadir Base de Datos
             </Button>
           </div>
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-8">
             {initialDatabases.map((db: any) => (
-              <Card key={db.id} className="border-border/50 bg-card/40 backdrop-blur-sm relative group">
-                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center gap-2">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 text-primary hover:bg-primary/10"
-                    onClick={() => setActiveConsole(activeConsole === db.id ? null : db.id)}
-                    title="SQL Console"
-                  >
-                    <TerminalSquare className="w-4 h-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                    onClick={() => handleDeleteDb(db.id, db.config?.coolify_uuid)}
-                    disabled={isDeleting === db.id}
-                  >
-                    {isDeleting === db.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                  </Button>
-                </div>
-                <CardHeader className="py-4">
-                  <div className="flex justify-between items-center pr-20">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded text-blue-400 bg-blue-500/10 flex items-center justify-center">
-                        <Database className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg disabled:opacity-50">{db.name}</CardTitle>
-                        <CardDescription>{db.config?.engine === "postgresql" ? "PostgreSQL Database" : "Database"}</CardDescription>
-                      </div>
-                    </div>
-                    <span className="text-xs bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded-full font-medium flex items-center gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      {db.status === "running" ? "Running" : db.status}
-                    </span>
-                  </div>
-                </CardHeader>
-                <CardContent className="py-4 border-t border-border/20 bg-muted/5">
-                  <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Internal URL</span>
-                    <code className="block w-full overflow-x-auto text-xs bg-black/40 px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-primary/50 text-emerald-400/90 font-mono">
-                      {db.config?.connection_uri || "N/A"}
-                    </code>
-                  </div>
-                  {activeConsole === db.id && <SqlConsole dbId={db.id} />}
-                </CardContent>
-              </Card>
+              <DatabaseCardItem 
+                key={db.id} 
+                db={db} 
+                handleDeleteDb={handleDeleteDb} 
+                isDeleting={isDeleting} 
+              />
             ))}
           </div>
         </div>
