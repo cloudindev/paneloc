@@ -540,6 +540,7 @@ export async function createCoolifyDatabase(projectId: string, payload: any) {
 
     return { 
       success: true, 
+      resourceId: resource.id,
       coolifyUuid: dbCreated.uuid,
       connectionString: connectionUri
     }

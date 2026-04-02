@@ -527,6 +527,10 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
   const [linkUri, setLinkUri] = React.useState("")
   const [isLinking, setIsLinking] = React.useState(false)
   
+  // Import state
+  const [importSql, setImportSql] = React.useState("")
+  const [importStatus, setImportStatus] = React.useState("")
+  
   const [isDeploying, setIsDeploying] = React.useState(false)
   const [isDeleting, setIsDeleting] = React.useState<string | null>(null)
   
@@ -613,6 +617,63 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
     }
     
     setIsDeploying(false)
+  }
+
+  const handleImport = async () => {
+    if (!importSql.trim()) return
+    setIsDeploying(true)
+    setImportStatus("Creando contenedor base...")
+    
+    // 1. Create DB
+    const res = await createCoolifyDatabase(resource.projectId, {
+      engine: selectedEngine.id,
+      name: dbName,
+      user: dbUser,
+      password: dbPassword,
+      isPublic,
+      linkedAppId: resource.id
+    })
+    
+    if (!res.success) {
+      alert("Error creando DB para importación: " + res.error)
+      setIsDeploying(false)
+      setImportStatus("")
+      return
+    }
+
+    setImportStatus("Esperando inicio (15s)...")
+    
+    // 2. Poll connect loop
+    let retries = 5;
+    let querySuccess = false;
+    
+    await new Promise(r => setTimeout(r, 15000));
+
+    while (retries > 0 && !querySuccess) {
+       setImportStatus(`Ejecutando SQL (intentos: ${retries})...`)
+       const execRes = await executeDatabaseQuery(res.resourceId!, importSql)
+       if (execRes.success) {
+         querySuccess = true;
+       } else {
+         retries--;
+         if (retries > 0) {
+            await new Promise(r => setTimeout(r, 5000));
+         } else {
+            alert("Error al importar el SQL tras varios reintentos: " + execRes.error)
+         }
+       }
+    }
+
+    setIsDeploying(false)
+    setImportStatus("")
+
+    if (querySuccess) {
+      setConnectionString(res.connectionString!)
+      setStep(4) // success step
+    } else {
+      setStep(0)
+      router.refresh()
+    }
   }
 
   const reset = () => {
@@ -989,25 +1050,86 @@ export function DatabasesView({ resource, initialDatabases }: { resource: any, i
   if (step === 6) {
     const Icon = selectedEngine!.icon
     return (
-       <div className="max-w-2xl mx-auto animate-in slide-in-from-right-8 duration-500">
-          <Button variant="ghost" className="mb-6 text-muted-foreground hover:text-foreground pl-0 group" onClick={() => setStep(1)}>
+       <div className="max-w-3xl mx-auto animate-in slide-in-from-right-8 duration-500">
+          <Button variant="ghost" className="mb-6 text-muted-foreground hover:text-foreground pl-0 group" onClick={() => setStep(1)} disabled={isDeploying}>
            <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
            Volver atrás
          </Button>
 
-         <Card className="border-border/50 bg-card/40 backdrop-blur-sm overflow-hidden text-center py-12">
-           <CardContent className="flex flex-col items-center justify-center space-y-4">
-              <div className="w-16 h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center hover:scale-105 transition-transform duration-300">
-                <FileUp className="w-8 h-8 text-blue-500" />
-              </div>
-              <h2 className="text-2xl font-bold mt-4">Importar DB Próximamente</h2>
-              <p className="text-muted-foreground max-w-sm">
-                Estamos terminando el importador que te permitirá subir tu archivo .SQL para desplegar e hidratar la base de datos en un solo paso.
-              </p>
-              <Button variant="outline" className="mt-4" onClick={() => setStep(1)}>
-                Entendido
-              </Button>
+         <Card className="border-border/50 bg-card/40 backdrop-blur-sm overflow-hidden">
+           <CardHeader className="border-b border-border/20 bg-muted/10">
+             <div className="flex items-center gap-3">
+               <div className={`w-8 h-8 rounded-lg flex items-center justify-center border ${selectedEngine!.color}`}>
+                  <FileUp className="w-4 h-4" />
+               </div>
+               <div>
+                  <CardTitle className="text-lg">Importar Base de Datos (SQL Dump)</CardTitle>
+                  <CardDescription>Crea la base de datos e inyecta la estructura/datos iniciales.</CardDescription>
+               </div>
+             </div>
+           </CardHeader>
+
+           <CardContent className="p-6 grid md:grid-cols-2 gap-6">
+             <div className="space-y-6">
+               <div className="space-y-2">
+                 <label className="text-sm font-medium flex items-center gap-2">Nombre de la Base de Datos</label>
+                 <Input 
+                   value={dbName} 
+                   onChange={e => setDbName(e.target.value)} 
+                   placeholder="app-db"
+                   className="bg-background/50"
+                 />
+               </div>
+
+               <div className="grid grid-cols-2 gap-4">
+                 <div className="space-y-2">
+                   <label className="text-sm font-medium">Usuario</label>
+                   <Input 
+                     value={dbUser} 
+                     onChange={e => setDbUser(e.target.value)} 
+                     placeholder="postgres"
+                     className="bg-background/50"
+                   />
+                 </div>
+                 <div className="space-y-2">
+                   <label className="text-sm font-medium">Contraseña</label>
+                   <Input 
+                     type="password"
+                     value={dbPassword} 
+                     onChange={e => setDbPassword(e.target.value)} 
+                     className="bg-background/50 font-mono text-sm"
+                   />
+                 </div>
+               </div>
+             </div>
+
+             <div className="space-y-2">
+               <label className="text-sm font-medium">Contenido SQL</label>
+               <textarea
+                 value={importSql}
+                 onChange={(e) => setImportSql(e.target.value)}
+                 placeholder="CREATE TABLE ...; INSERT INTO ...;"
+                 className="w-full h-full min-h-[200px] bg-black/40 text-blue-400 font-mono text-xs p-3 rounded-md focus:outline-none focus:ring-1 focus:ring-primary/50 resize-y border border-border/20"
+                 spellCheck={false}
+               />
+             </div>
            </CardContent>
+
+           <CardFooter className="p-6 pt-0 border-t border-border/20 mt-6 pt-6 flex justify-between items-center bg-muted/5">
+             <div className="text-sm text-muted-foreground flex items-center gap-2">
+               <Shield className="w-4 h-4 text-emerald-500" />
+               Asegúrate de que el SQL es compatible con PostgreSQL.
+             </div>
+             <Button 
+               size="lg" 
+               className="gap-2 font-medium" 
+               onClick={handleImport}
+               disabled={isDeploying || !dbName || !importSql.trim()}
+             >
+               {isDeploying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+               {importStatus || "Desplegar e Importar"}
+             </Button>
+           </CardFooter>
          </Card>
       </div>
     )
