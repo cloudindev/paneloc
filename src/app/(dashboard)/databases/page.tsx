@@ -1,14 +1,33 @@
-export default function DatabasesPage() {
-  return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight">Databases</h1>
-        <p className="text-muted-foreground mt-1">Bases de datos aisladas y compartidas.</p>
-      </div>
-      <div className="p-12 text-center border border-dashed rounded-xl bg-black/[0.01]">
-        <h3 className="text-lg font-medium mb-2">Sección Global de Bases de Datos</h3>
-        <p className="text-muted-foreground max-w-md mx-auto">Aquí se mostrará el listado de todos los clústeres de bases de datos que no están anidados exclusivamente dentro de un proyecto, o el resumen global de los mismos.</p>
-      </div>
-    </div>
-  )
+import { GlobalDatabasesView } from "./global-databases-client"
+import { prisma } from "@/lib/prisma"
+
+export const dynamic = "force-dynamic"
+
+export default async function DatabasesPage() {
+  // Fetch all databases for all projects
+  // In a real multi-tenant app, we'd filter by the current team or organization
+  const databases = await prisma.resource.findMany({
+    where: {
+      type: "POSTGRES_DB"
+    },
+    include: {
+      project: true
+    },
+    orderBy: {
+      createdAt: "desc"
+    }
+  })
+
+  // Sanitize the config since it's stored as JSON
+  const serialized = databases.map(db => ({
+    id: db.id,
+    name: db.name,
+    type: db.type,
+    status: db.status,
+    projectId: db.projectId,
+    project: db.project ? { name: db.project.name } : null,
+    config: typeof db.config === 'string' ? JSON.parse(db.config) : (db.config || {})
+  }))
+
+  return <GlobalDatabasesView databases={serialized} />
 }
