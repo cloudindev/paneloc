@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 import { getResourceById } from "@/app/actions/projects"
 import { getApplicationDeployments } from "@/app/actions/coolify"
 import { LogsTerminal } from "./logs-terminal"
+import { DeploymentsList } from "../deployments/deployments-list"
 
 export const dynamic = 'force-dynamic'
 
@@ -19,17 +20,24 @@ export default async function LogsPage({ params, searchParams }: { params: Promi
   const config = resource.config as any
   const coolifyUuid = config?.coolify_uuid
 
-  // If no specific deployment is requested, we look up the latest one in the history to show the user the most recent build
+  let initialDeployments: any[] = []
+  let apiDebug = ""
+
   if (!deploymentUuid && coolifyUuid) {
      const resDeploys = await getApplicationDeployments(coolifyUuid)
-     if (resDeploys.success && resDeploys.deployments.length > 0) {
-        deploymentUuid = resDeploys.deployments[0].deployment_uuid || resDeploys.deployments[0].uuid || resDeploys.deployments[0].id
+     if (resDeploys.success) {
+        initialDeployments = resDeploys.deployments
+        apiDebug = (resDeploys as any).debug || ""
      }
   }
 
   return (
-    <div className="flex flex-1 h-full flex-col">
-      <LogsTerminal resource={resource} initialDeploymentUuid={deploymentUuid} />
+    <div className="flex flex-1 h-full flex-col space-y-6">
+      {deploymentUuid ? (
+        <LogsTerminal resource={resource} initialDeploymentUuid={deploymentUuid} />
+      ) : (
+        <DeploymentsList resource={resource} initialDeployments={initialDeployments} initialDebug={apiDebug} />
+      )}
     </div>
   )
 }
