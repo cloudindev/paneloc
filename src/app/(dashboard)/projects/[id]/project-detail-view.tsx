@@ -86,7 +86,7 @@ export function ProjectDetailView({ initialResource }: { initialResource: any })
             {domain ? (
               <div className="absolute inset-0 w-full h-full p-6 flex flex-col items-center justify-center">
                 <div className="w-full aspect-[4/3] relative rounded-lg overflow-hidden border border-border bg-background shadow-sm hover:shadow-md transition-shadow">
-                  {/* Using a scaled iframe instead of mshots to guarantee a real-time preview without 3rd party API 404s */}
+                  {/* Scaled iframe preview to guarantee a real-time preview of the domain */}
                   <iframe 
                       src={domain.startsWith('http') ? domain : `https://${domain}`} 
                       className="absolute top-0 left-0 w-[300%] h-[300%] border-0 opacity-100 origin-top-left animate-in fade-in transition-[opacity,transform] duration-1000 bg-white"
