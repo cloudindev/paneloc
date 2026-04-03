@@ -1,14 +1,30 @@
 import { GlobalDatabasesView } from "./global-databases-client"
 import { prisma } from "@/lib/prisma"
+import { cookies } from "next/headers"
+import { verifyJWT } from "@/lib/auth"
 
 export const dynamic = "force-dynamic"
 
 export default async function DatabasesPage() {
-  // Fetch all databases for all projects
-  // In a real multi-tenant app, we'd filter by the current team or organization
+  const cookieStore = await cookies()
+  const token = cookieStore.get("olacloud_session")?.value
+  if (!token) throw new Error("Unauthorized")
+
+  const session = await verifyJWT(token)
+  if (!session || !session.sub) throw new Error("Unauthorized")
+
   const databases = await prisma.resource.findMany({
     where: {
-      type: "POSTGRES_DB"
+      type: "POSTGRES_DB",
+      project: {
+        organization: {
+          members: {
+            some: {
+              userId: session.sub
+            }
+          }
+        }
+      }
     },
     include: {
       project: true

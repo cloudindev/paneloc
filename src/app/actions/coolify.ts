@@ -655,3 +655,18 @@ export async function deleteAppEnvVar(resourceId: string, envUuid: string) {
     return { success: false, error: error.message }
   }
 }
+
+export async function deleteAppEnvVarByKey(resourceId: string, key: string) {
+  try {
+    const existingEnvsRes = await getAppEnvVars(resourceId)
+    if (existingEnvsRes.success && Array.isArray(existingEnvsRes.data)) {
+      const duplicates = existingEnvsRes.data.filter((e: any) => e.key === key)
+      for (const dup of duplicates) {
+        await deleteAppEnvVar(resourceId, dup.uuid)
+      }
+    }
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+}

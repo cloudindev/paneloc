@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { getAppEnvVars, createAppEnvVar, updateAppEnvVar, deleteAppEnvVar } from "@/app/actions/coolify"
+import { getAppEnvVars, createAppEnvVar, updateAppEnvVar, deleteAppEnvVar, deleteAppEnvVarByKey } from "@/app/actions/coolify"
 
 export default function ProjectEnvVarsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: resourceId } = React.use(params)
@@ -94,9 +94,12 @@ export default function ProjectEnvVarsPage({ params }: { params: Promise<{ id: s
   const confirmDeleteEnv = async () => {
     if (!deleteModalEnv) return
     setDeletingId(deleteModalEnv.uuid)
-    const res = await deleteAppEnvVar(resourceId, deleteModalEnv.uuid)
+    
+    // Al borrar la variable "n" visualmente deduplicada, en realidad le decimos al backend que DESTRUYA todas las entradas fantasmas de Coolify que compartan esa 'key' exacta
+    const res = await deleteAppEnvVarByKey(resourceId, deleteModalEnv.key)
+    
     if (res.success) {
-      setEnvVars(prev => prev.filter(v => v.uuid !== deleteModalEnv.uuid))
+      setEnvVars(prev => prev.filter(v => v.key !== deleteModalEnv.key))
     } else {
       alert("Error borrando variable: " + res.error)
     }
