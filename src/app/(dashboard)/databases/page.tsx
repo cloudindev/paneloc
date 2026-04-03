@@ -29,5 +29,17 @@ export default async function DatabasesPage() {
     config: typeof db.config === 'string' ? JSON.parse(db.config) : (db.config || {})
   }))
 
-  return <GlobalDatabasesView databases={serialized} />
+  // Deduplicar bases de datos que en realidad son la misma conexión compartida (mismo UUID o nombre)
+  const uniqueKeys = new Set()
+  const uniqueDbList = serialized.filter(db => {
+    // Si la db se llama "8927hksknotbd8" repetidas veces o comparten UUID
+    const duplicateKey = db.config?.coolify_uuid || db.name
+    if (uniqueKeys.has(duplicateKey)) {
+      return false
+    }
+    uniqueKeys.add(duplicateKey)
+    return true
+  })
+
+  return <GlobalDatabasesView databases={uniqueDbList} />
 }
