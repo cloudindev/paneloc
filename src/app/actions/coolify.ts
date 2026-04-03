@@ -596,8 +596,20 @@ export async function getAppEnvVars(resourceId: string) {
 
 export async function createAppEnvVar(resourceId: string, key: string, value: string, isSecret: boolean) {
   try {
-    // Usamos POST nativo de Coolify para crear una variable individual, evitando bug de duplicados de PATCH /bulk
+    // Usamos POST nativo de Coolify para crear una variable individual, evitando bug de duplicados
     const uuid = await _getAppUuidSafe(resourceId)
+    
+    // Safety check: delete existing variables with the same key to prevent duplication in Coolify DB
+    try {
+      const existingEnvsRes = await getAppEnvVars(resourceId)
+      if (existingEnvsRes.success && Array.isArray(existingEnvsRes.data)) {
+         const duplicates = existingEnvsRes.data.filter((e: any) => e.key === key)
+         for (const dup of duplicates) {
+           await deleteAppEnvVar(resourceId, dup.uuid)
+         }
+      }
+    } catch(e) {}
+
     const body = {
       key,
       value,

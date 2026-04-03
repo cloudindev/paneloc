@@ -37,8 +37,13 @@ export default function ProjectEnvVarsPage({ params }: { params: Promise<{ id: s
     setLoading(true)
     const res = await getAppEnvVars(resourceId)
     if (res.success && res.data) {
-      // res.data could be an array of envs
-      setEnvVars(Array.isArray(res.data) ? res.data : [])
+      const dataArray = Array.isArray(res.data) ? res.data : []
+      // Deduplicar variables por key visualmente limpias (la última sobreescribe a las anteriores)
+      const mapped = new Map()
+      for (const item of dataArray) {
+        mapped.set(item.key, item)
+      }
+      setEnvVars(Array.from(mapped.values()))
     }
     setLoading(false)
   }
