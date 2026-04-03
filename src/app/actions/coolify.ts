@@ -587,18 +587,16 @@ export async function getAppEnvVars(resourceId: string) {
 
 export async function createAppEnvVar(resourceId: string, key: string, value: string, isSecret: boolean) {
   try {
-    // Al usar PATCH /bulk, Coolify opera de manera idempotente ("upsert" por Key),
-    // resolviendo así cualquier bug de duplicación por lado del servidor (Coolify POST API issue).
+    // Usamos POST nativo de Coolify para crear una variable individual, evitando bug de duplicados de PATCH /bulk
     const uuid = await _getAppUuidSafe(resourceId)
     const body = {
-      data: [{
-        key,
-        value,
-        is_preview: false,
-        is_literal: isSecret
-      }]
+      key,
+      value,
+      is_preview: false,
+      is_build_time: false,
+      is_literal: isSecret
     }
-    const res = await coolifyFetch("PATCH", `/applications/${uuid}/envs/bulk`, body)
+    const res = await coolifyFetch("POST", `/applications/${uuid}/envs`, body)
     return { success: true, data: res }
   } catch (error: any) {
     console.error("Error creando variable:", error)
@@ -606,19 +604,21 @@ export async function createAppEnvVar(resourceId: string, key: string, value: st
   }
 }
 
-export async function updateAppEnvVar(resourceId: string, key: string, value: string, isSecret: boolean) {
+export async function updateAppEnvVar(resourceId: string, envUuid: string, key: string, value: string, isSecret: boolean) {
   try {
-    // Coolify v4 usa Bulk update por defecto. Basta con enviar el array.
     const uuid = await _getAppUuidSafe(resourceId)
+    // Borramos primero la variable anterior para asegurar limpieza total sin bugs de Bulk Update
+    await deleteAppEnvVar(resourceId, envUuid);
+    
+    // Y la recreamos
     const body = {
-      data: [{
-        key,
-        value,
-        is_preview: false,
-        is_literal: isSecret
-      }]
+      key,
+      value,
+      is_preview: false,
+      is_build_time: false,
+      is_literal: isSecret
     }
-    const res = await coolifyFetch("PATCH", `/applications/${uuid}/envs/bulk`, body)
+    const res = await coolifyFetch("POST", `/applications/${uuid}/envs`, body) 
     return { success: true, data: res }
   } catch (error: any) {
     console.error("Error actualizando variable:", error)

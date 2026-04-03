@@ -69,9 +69,8 @@ export default function ProjectEnvVarsPage({ params }: { params: Promise<{ id: s
     
     let res;
     if (editingEnv) {
-      // Si estamos editando y cambiamos la key pero delete/recreate no funciona podemos usar bulk.
-      // Ya implementamos updateAppEnvVar que usa PATCH /bulk enviando el Key
-      res = await updateAppEnvVar(resourceId, formKey, formValue, formIsSecret)
+      // Si estamos editando, usamos la nueva firma que borra y recrea.
+      res = await updateAppEnvVar(resourceId, editingEnv.uuid, formKey, formValue, formIsSecret)
     } else {
       res = await createAppEnvVar(resourceId, formKey, formValue, formIsSecret)
     }
