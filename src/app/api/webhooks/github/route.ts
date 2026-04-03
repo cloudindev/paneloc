@@ -27,7 +27,14 @@ export async function POST(req: Request) {
     })
 
     const matchingResources = allWebServices.filter(r => {
-      const config = r.config as any
+      let config = r.config as any
+      if (typeof config === "string") {
+        try {
+          config = JSON.parse(config)
+        } catch {
+          return false
+        }
+      }
       return config && config.repo === repoFullName && config.branch === branch
     })
 
@@ -39,7 +46,14 @@ export async function POST(req: Request) {
     // 4. Disparar el deploy en Coolify para cada app vinculada
     const results = []
     for (const res of matchingResources) {
-      const config = res.config as any
+      let config = res.config as any
+      if (typeof config === "string") {
+        try {
+          config = JSON.parse(config)
+        } catch {
+          continue
+        }
+      }
       if (config.coolify_uuid) {
          console.log(`[GitHub Webhook] Forzando redespliegue de ${res.name} (UUID: ${config.coolify_uuid})...`)
          // El segundo argumento es force=false
