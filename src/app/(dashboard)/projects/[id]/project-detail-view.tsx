@@ -86,12 +86,20 @@ export function ProjectDetailView({ initialResource }: { initialResource: any })
             {domain ? (
               <div className="absolute inset-0 w-full h-full p-6 flex flex-col items-center justify-center">
                 <div className="w-full aspect-[4/3] relative rounded-lg overflow-hidden border border-border bg-background shadow-sm hover:shadow-md transition-shadow">
-                  <img 
-                      src={`https://s0.wordpress.com/mshots/v1/${encodeURIComponent(domain.startsWith('http') ? domain : 'https://' + domain)}?w=800&h=600`} 
-                      alt="Live Preview" 
-                      className="w-full h-full object-cover object-top"
+                  {/* Using a scaled iframe instead of mshots to guarantee a real-time preview without 3rd party API 404s */}
+                  <iframe 
+                      src={domain.startsWith('http') ? domain : `https://${domain}`} 
+                      className="absolute top-0 left-0 w-[300%] h-[300%] border-0 opacity-100 origin-top-left animate-in fade-in transition-[opacity,transform] duration-1000 bg-white"
+                      style={{ 
+                        transform: 'scale(0.333333)',
+                        pointerEvents: 'none',
+                        userSelect: 'none'
+                      }}
+                      tabIndex={-1}
+                      title="Live Preview"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/10 to-transparent pointer-events-none" />
+                  {/* Overlay to prevent ANY interaction and add a slight gradient */}
+                  <div className="absolute inset-0 bg-transparent z-10" />
                 </div>
               </div>
             ) : (
