@@ -432,6 +432,16 @@ export async function getApplicationDeployments(uuid: string) {
   }
 }
 
+export async function triggerDeploymentInternal(uuid: string, force: boolean = false) {
+  try {
+    await coolifyFetch("POST", `/deploy?uuid=${uuid}&force=${force}`)
+    return { success: true }
+  } catch (error: any) {
+    console.error("Error forzando redespliegue interno:", error)
+    return { success: false, error: error.message }
+  }
+}
+
 export async function triggerDeployment(uuid: string, force: boolean = false) {
   try {
     const cookieStore = await cookies()
@@ -441,8 +451,7 @@ export async function triggerDeployment(uuid: string, force: boolean = false) {
     const session = await verifyJWT(token)
     if (!session || !session.sub) throw new Error("Sesión inválida")
 
-    await coolifyFetch("POST", `/deploy?uuid=${uuid}&force=${force}`)
-    return { success: true }
+    return await triggerDeploymentInternal(uuid, force)
   } catch (error: any) {
     console.error("Error forzando redespliegue:", error)
     return { success: false, error: error.message }

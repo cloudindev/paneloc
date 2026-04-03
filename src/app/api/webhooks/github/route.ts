@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { triggerDeployment } from "@/app/actions/coolify"
+import { triggerDeploymentInternal } from "@/app/actions/coolify"
 
 export async function POST(req: Request) {
   try {
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
       if (config.coolify_uuid) {
          console.log(`[GitHub Webhook] Forzando redespliegue de ${res.name} (UUID: ${config.coolify_uuid})...`)
          // El segundo argumento es force=false
-         const deployRes = await triggerDeployment(config.coolify_uuid, false)
+         const deployRes = await triggerDeploymentInternal(config.coolify_uuid, false)
          results.push({ id: res.id, name: res.name, coolifyResponse: deployRes })
       }
     }
