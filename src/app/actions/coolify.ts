@@ -602,7 +602,6 @@ export async function createAppEnvVar(resourceId: string, key: string, value: st
       key,
       value,
       is_preview: false,
-      is_build_time: false,
       is_literal: isSecret
     }
     const res = await coolifyFetch("POST", `/applications/${uuid}/envs`, body)
@@ -624,7 +623,6 @@ export async function updateAppEnvVar(resourceId: string, envUuid: string, key: 
       key,
       value,
       is_preview: false,
-      is_build_time: false,
       is_literal: isSecret
     }
     const res = await coolifyFetch("POST", `/applications/${uuid}/envs`, body) 
