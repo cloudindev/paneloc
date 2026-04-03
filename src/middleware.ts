@@ -7,7 +7,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/forgot-password')
-  const isPublicApi = pathname.startsWith('/api/health') || pathname.startsWith('/api/debug')
+  const isPublicApi = pathname.startsWith('/api/health') || pathname.startsWith('/api/debug') || pathname.startsWith('/api/webhooks')
 
   if (!token) {
     // Si no hay token y no es ruta pública, forzar login
