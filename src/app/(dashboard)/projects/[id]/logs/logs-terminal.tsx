@@ -145,12 +145,17 @@ export function LogsTerminal({ resource, initialDeploymentUuid }: { resource: an
           className="h-full w-full overflow-y-auto p-6 text-[13px] font-mono text-zinc-300 leading-relaxed break-words whitespace-pre-wrap select-text focus:outline-none"
           style={{ scrollbarWidth: "thin", scrollbarColor: "#3f3f46 #0c0c0c" }}
         >
-          {logs.map((line, idx) => (
-            <div key={idx} className={`whitespace-pre-wrap flex items-start ${line.type === 'stderr' ? 'text-red-400' : 'text-zinc-300'}`}>
-              {line.timestamp && <span className="text-zinc-500 mr-4 select-none shrink-0">{formatTimestamp(line.timestamp)}</span>}
-              <span className="flex-1 break-words">{line.output}</span>
-            </div>
-          ))}
+          {logs.map((line, idx) => {
+            const isTypicalBuildKitProgress = line.type === 'stderr' && (line.output.trim().startsWith('#') || line.output.includes('npm warn') || line.output.includes('WARN'));
+            const textColor = line.type === 'stderr' && !isTypicalBuildKitProgress ? 'text-red-400' : 'text-zinc-300';
+            
+            return (
+              <div key={idx} className={`whitespace-pre-wrap flex items-start ${textColor}`}>
+                {line.timestamp && <span className="text-zinc-500 mr-4 select-none shrink-0">{formatTimestamp(line.timestamp)}</span>}
+                <span className="flex-1 break-words">{line.output}</span>
+              </div>
+            )
+          })}
         </pre>
       </CardContent>
     </Card>
