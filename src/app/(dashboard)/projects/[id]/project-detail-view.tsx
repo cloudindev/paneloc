@@ -2,23 +2,31 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { ArrowLeft, Globe2, Server, TerminalSquare, ExternalLink, Activity, Github, Settings, RefreshCw, KeyRound, Database } from "lucide-react"
+import { ArrowLeft, Globe2, Server, TerminalSquare, ExternalLink, Activity, Github, Settings, RefreshCw, KeyRound, Database, PlusCircle, GitBranch, GitCommit } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { getLiveProjectStatus } from "@/app/actions/coolify"
+import { getLiveProjectStatus, getApplicationDeployments } from "@/app/actions/coolify"
 
 export function ProjectDetailView({ initialResource }: { initialResource: any }) {
   const [resource, setResource] = React.useState(initialResource)
   const [liveData, setLiveData] = React.useState<any>(null)
+  const [latestDeploy, setLatestDeploy] = React.useState<any>(null)
   
   React.useEffect(() => {
     if (!resource.config?.coolify_uuid) return
 
     const fetchLive = async () => {
-      const live = await getLiveProjectStatus(resource.config.coolify_uuid)
+      const liveReq = getLiveProjectStatus(resource.config.coolify_uuid)
+      const deployReq = getApplicationDeployments(resource.config.coolify_uuid)
+      
+      const [live, deploys] = await Promise.all([liveReq, deployReq])
+      
       if (live.success) {
         setLiveData(live)
+      }
+      if (deploys.success && deploys.deployments?.length > 0) {
+        setLatestDeploy(deploys.deployments[0])
       }
     }
     
@@ -70,62 +78,98 @@ export function ProjectDetailView({ initialResource }: { initialResource: any })
         </div>
       </div>
 
-      {/* CONTENT AREA (General Overview Context) */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="bg-card/40 backdrop-blur-sm border-border/50">
-          <CardHeader>
-            <CardTitle className="text-lg">Producción</CardTitle>
-            <CardDescription>Información del entorno principal</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm">
-            <div className="flex justify-between border-b pb-2">
-              <span className="text-muted-foreground">Dominio</span>
-              {domain ? (
-                <a href={domain.startsWith("http") ? domain : `https://${domain}`} target="_blank" rel="noreferrer" className="font-medium text-primary hover:underline flex items-center gap-1">
-                  {domain.replace(/^https?:\/\//, '')} <ExternalLink className="h-3 w-3" />
-                </a>
-              ) : (
-                <span className="font-medium text-foreground">Sin Dominio</span>
-              )}
-            </div>
-            <div className="flex justify-between border-b pb-2">
-              <span className="text-muted-foreground">Estado</span>
-              <span className="font-medium text-emerald-500 capitalize">{status}</span>
-            </div>
-            <div className="flex justify-between border-b pb-2">
-              <span className="text-muted-foreground">Actualizado</span>
-              <span className="font-medium text-foreground">{liveData?.updated_at ? new Date(liveData.updated_at).toLocaleString() : "..."}</span>
-            </div>
-            <div className="flex justify-between pb-2">
-              <span className="text-muted-foreground">Motor</span>
-              <span className="font-medium text-foreground capitalize">{resource.config?.build_pack || "Nixpacks"}</span>
-            </div>
-          </CardContent>
-        </Card>
+      {/* CONTENT AREA (Vercel-style Unified Overview) */}
+      <Card className="bg-card/40 backdrop-blur-sm border-border/50 overflow-hidden">
+        <div className="grid md:grid-cols-5 gap-0">
+          {/* Left Side: Screenshot */}
+          <div className="md:col-span-2 border-r border-border/50 bg-muted/10 relative min-h-[300px] flex items-center justify-center p-0">
+            {domain ? (
+              <div className="absolute inset-0 w-full h-full p-6 flex flex-col items-center justify-center">
+                <div className="w-full aspect-[4/3] relative rounded-lg overflow-hidden border border-border bg-background shadow-sm hover:shadow-md transition-shadow">
+                  <img 
+                      src={`https://s0.wordpress.com/mshots/v1/${encodeURIComponent(domain.startsWith('http') ? domain : 'https://' + domain)}?w=800&h=600`} 
+                      alt="Live Preview" 
+                      className="w-full h-full object-cover object-top"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/10 to-transparent pointer-events-none" />
+                </div>
+              </div>
+            ) : (
+              <div className="text-muted-foreground flex flex-col items-center">
+                <Globe2 className="h-8 w-8 mb-2 opacity-20" />
+                <span className="text-sm">Sin dominio público</span>
+              </div>
+            )}
+          </div>
 
-        <Card className="bg-card/40 backdrop-blur-sm border-border/50">
-          <CardHeader>
-            <CardTitle className="text-lg">Repositorio Git</CardTitle>
-            <CardDescription>Código fuente conectado</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm">
-            <div className="flex justify-between border-b pb-2">
-              <span className="text-muted-foreground">URL</span>
-              <a href={`https://github.com/${resource.config?.repo}`} target="_blank" rel="noreferrer" className="font-medium text-primary hover:underline flex items-center gap-1">
-                  <Github className="h-3 w-3" /> {resource.config?.repo}
+          {/* Right Side: Data */}
+          <div className="md:col-span-3 p-6 lg:p-8 flex flex-col justify-center space-y-8">
+            
+            <div className="space-y-1.5">
+              <h3 className="text-sm font-medium text-muted-foreground">Deployment</h3>
+              <a href={domain?.startsWith("http") ? domain : `https://${domain}`} target="_blank" rel="noreferrer" className="text-[15px] font-semibold hover:underline flex items-center gap-1.5 w-fit text-foreground">
+                {liveData?.fqdn || resource.config?.domain || "Configurando..."}
               </a>
             </div>
-            <div className="flex justify-between border-b pb-2">
-              <span className="text-muted-foreground">Rama (Branch)</span>
-              <span className="font-mono text-foreground">{resource.config?.branch || "main"}</span>
+
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-medium text-muted-foreground">Domains</h3>
+                <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full"><PlusCircle className="h-3.5 w-3.5 text-muted-foreground" /></Button>
+              </div>
+              <div className="flex flex-wrap gap-x-4 gap-y-2">
+                  {domain ? (
+                    <a href={domain.startsWith("http") ? domain : `https://${domain}`} target="_blank" rel="noreferrer" className="text-[15px] font-semibold hover:underline flex items-center gap-1.5 text-foreground">
+                      {domain.replace(/^https?:\/\//, '')} <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                    </a>
+                  ) : (
+                    <span className="text-[15px] font-semibold text-muted-foreground">No configurado</span>
+                  )}
+              </div>
             </div>
-            <div className="flex justify-between pb-2">
-              <span className="text-muted-foreground">Auto-Despliegue</span>
-              <Badge variant="outline" className="text-emerald-500 border-emerald-500/20 bg-emerald-500/10">Activado</Badge>
+
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-1.5">
+                <h3 className="text-sm font-medium text-muted-foreground">Status</h3>
+                <div className="flex items-center gap-2">
+                    <span className={`w-2.5 h-2.5 rounded-full ${status.includes("running") ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 'bg-yellow-500'}`} />
+                    <span className="text-[15px] font-medium text-foreground flex items-center gap-1.5">
+                      {status.includes("running") ? "Ready" : status} 
+                      <span className="text-[13px] text-muted-foreground font-normal ml-1">
+                        {latestDeploy?.created_at ? (() => {
+                          const d = new Date(latestDeploy.created_at)
+                          const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+                          return `${d.getDate()} ${months[d.getMonth()]} by system`
+                        })() : (liveData?.updated_at ? "Updated" : "")}
+                      </span>
+                    </span>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <h3 className="text-sm font-medium text-muted-foreground">Motor</h3>
+                <span className="text-[15px] font-medium capitalize text-foreground">{resource.config?.build_pack || "Nixpacks"}</span>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+
+            <div className="space-y-1.5">
+              <h3 className="text-sm font-medium text-muted-foreground">Source</h3>
+              <div className="flex items-center gap-2 text-[15px] font-medium text-foreground">
+                <GitBranch className="h-4 w-4 text-muted-foreground" />
+                <span>{resource.config?.branch || "main"}</span>
+              </div>
+              {latestDeploy && (
+                <div className="flex items-center gap-2 text-[13px] text-muted-foreground mt-1.5">
+                  <GitCommit className="h-3.5 w-3.5 ml-0.5" />
+                  <span className="font-mono text-xs">{latestDeploy.commit?.substring(0, 7) || "Manual"}</span>
+                  <span className="truncate max-w-[300px] text-foreground/80">{latestDeploy.commit_message || "Despliegue inicial"}</span>
+                </div>
+              )}
+            </div>
+
+          </div>
+        </div>
+      </Card>
     </div>
   )
 }
