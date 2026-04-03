@@ -49,8 +49,8 @@ function ActionMenu({ project, onDelete }: { project: any, onDelete: (id: string
           {isDeleting ? <Loader2 className="h-4 w-4 animate-spin text-destructive" /> : <MoreVertical className="h-4 w-4" />}
         </Button>
         {open && (
-          <div className="absolute right-0 top-10 w-48 rounded-md bg-[#020817] border border-border/50 shadow-2xl z-50 p-1 animate-in fade-in zoom-in-95 data-[side=bottom]:slide-in-from-top-2">
-            <button onClick={handleDeleteClick} className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-destructive/10 text-destructive data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+          <div className="absolute right-0 top-8 w-48 rounded-md bg-popover border border-border shadow-md z-50 p-1 animate-in fade-in zoom-in-95">
+            <button onClick={handleDeleteClick} className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-destructive/10 text-destructive font-medium">
               <Trash2 className="h-4 w-4 mr-2" /> Eliminar Proyecto
             </button>
           </div>

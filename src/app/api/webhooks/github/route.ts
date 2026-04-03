@@ -4,7 +4,20 @@ import { triggerDeploymentInternal } from "@/app/actions/coolify"
 
 export async function POST(req: Request) {
   try {
-    const payload = await req.json()
+    let payload;
+    const contentType = req.headers.get("content-type") || "";
+
+    if (contentType.includes("application/x-www-form-urlencoded")) {
+      const formData = await req.formData()
+      const payloadStr = formData.get("payload")
+      if (typeof payloadStr === "string") {
+        payload = JSON.parse(payloadStr)
+      } else {
+         return NextResponse.json({ error: "No payload found in form-data" }, { status: 400 })
+      }
+    } else {
+      payload = await req.json()
+    }
 
     // 1. Manejar ping event de GitHub
     if (payload.zen) {
@@ -35,7 +48,9 @@ export async function POST(req: Request) {
           return false
         }
       }
-      return config && config.repo === repoFullName && config.branch === branch
+      return config && 
+             config.repo?.toLowerCase() === repoFullName.toLowerCase() && 
+             config.branch?.toLowerCase() === branch.toLowerCase()
     })
 
     if (matchingResources.length === 0) {

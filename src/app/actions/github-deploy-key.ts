@@ -106,8 +106,12 @@ export async function addDeployKeyToGithubRepo(installationId: string, repoFullN
       })
       console.log(`Successfully added webhook for ${repoFullName}`)
     } catch (whErr: any) {
-      console.error("Warning: Could not create webhook (maybe it already exists?):", whErr.message)
-      // We don't fail the whole function if webhook fails, they can still deploy manually
+      if (whErr.message?.includes("already exists")) {
+         console.log(`Webhook already exists for ${repoFullName}`)
+      } else {
+         console.error("Failed to create webhook details:", whErr)
+         throw new Error(`The GitHub App is missing Webhooks permissions. Failed to create webhook: ${whErr.message}`)
+      }
     }
     
     return { success: true, privateKey }
