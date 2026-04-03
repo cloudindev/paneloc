@@ -20,6 +20,12 @@ export function Navbar({ projects = [], organization = "Personal" }: { projects?
   const currentProject = currentProjectId ? projects.find(p => p.id === currentProjectId) : null
   const resourceParams = currentProject
 
+  // Extract trailing path to preserve tabs like /databases, /logs, /env when switching projects
+  let trailingPath = ""
+  if (currentProjectId && pathname.startsWith(`/projects/${currentProjectId}/`)) {
+    trailingPath = pathname.replace(`/projects/${currentProjectId}`, "")
+  }
+
   // Click outside listener
   React.useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -85,7 +91,7 @@ export function Navbar({ projects = [], organization = "Personal" }: { projects?
                   filteredResources.map((res: any) => (
                     <Link 
                       key={res.id} 
-                      href={`/projects/${res.id}`}
+                      href={`/projects/${res.id}${trailingPath}`}
                       onClick={() => setOpenSwitcher(false)}
                       className={`flex items-center justify-between w-full px-3 py-2 text-sm rounded-md transition-colors ${res.id === currentProjectId ? 'bg-primary/10 text-primary' : 'hover:bg-muted text-foreground'}`}
                     >
