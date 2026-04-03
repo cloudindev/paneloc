@@ -88,6 +88,27 @@ export async function addDeployKeyToGithubRepo(installationId: string, repoFullN
     })
     
     console.log(`Successfully added deploy key to ${repoFullName}`)
+
+    // Create the Webhook back to panel.olacloud.es
+    try {
+      const webhookUrl = "https://panel.olacloud.es/api/webhooks/github"
+      await octokit.rest.repos.createWebhook({
+        owner,
+        repo,
+        name: "web",
+        active: true,
+        events: ["push"],
+        config: {
+          url: webhookUrl,
+          content_type: "json",
+          insecure_ssl: "0"
+        }
+      })
+      console.log(`Successfully added webhook for ${repoFullName}`)
+    } catch (whErr: any) {
+      console.error("Warning: Could not create webhook (maybe it already exists?):", whErr.message)
+      // We don't fail the whole function if webhook fails, they can still deploy manually
+    }
     
     return { success: true, privateKey }
   } catch (error: any) {
