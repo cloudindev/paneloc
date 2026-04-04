@@ -3,12 +3,38 @@
 import * as React from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Database, TerminalSquare, Search, Plus, ExternalLink } from "lucide-react"
+import { Database, TerminalSquare, Search, Plus, ExternalLink, Trash2, Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
+import { deleteDatabaseFromCoolify } from "@/app/actions/coolify"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 export function GlobalDatabasesView({ databases }: { databases: any[] }) {
+  const router = useRouter()
   const [search, setSearch] = React.useState("")
+  const [deleteModalDb, setDeleteModalDb] = React.useState<{id: string, name: string, coolifyUuid: string} | null>(null)
+  const [isDeleting, setIsDeleting] = React.useState<boolean>(false)
+
+  const confirmDeleteDb = async () => {
+    if (!deleteModalDb) return
+    setIsDeleting(true)
+    
+    try {
+      const res = await deleteDatabaseFromCoolify(deleteModalDb.id, deleteModalDb.coolifyUuid)
+      if (res.success) {
+        toast.success("Base de datos eliminada.")
+        setDeleteModalDb(null)
+        router.refresh()
+      } else {
+        toast.error(`Error: ${res.error}`)
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Error al eliminar")
+    } finally {
+      setIsDeleting(false)
+    }
+  }
 
   const filtered = databases.filter(db => 
     db.name.toLowerCase().includes(search.toLowerCase()) || 
@@ -44,6 +70,31 @@ export function GlobalDatabasesView({ databases }: { databases: any[] }) {
           />
         </div>
       </div>
+
+      {deleteModalDb && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-xl animate-in fade-in zoom-in-95 text-center relative z-50">
+            <div className="mx-auto w-12 h-12 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mb-4">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <h2 className="text-lg font-semibold tracking-tight mb-2">
+              Eliminar Base de Datos
+            </h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              ¿Seguro que quieres eliminar <strong>{deleteModalDb.name}</strong>? Se destruirá permanentemente de Coolify y de OLA Cloud.
+            </p>
+            <div className="flex justify-center gap-3 w-full">
+              <Button variant="outline" className="flex-1" onClick={() => setDeleteModalDb(null)} disabled={isDeleting !== null}>
+                Cancelar
+              </Button>
+              <Button onClick={confirmDeleteDb} disabled={isDeleting !== null} className="flex-1 bg-red-600 hover:bg-red-700 text-white">
+                {isDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Eliminar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {filtered.length === 0 ? (
         <div className="text-center py-20 border border-dashed rounded-xl border-border bg-card/40 backdrop-blur-sm">
@@ -88,11 +139,18 @@ export function GlobalDatabasesView({ databases }: { databases: any[] }) {
                     {db.config?.connection_uri || "N/A"}
                   </code>
                 </div>
-                <div className="grid grid-cols-1 w-full gap-3">
-                  <Button asChild variant="secondary" className="gap-2 rounded-lg transition-all w-full">
+                <div className="grid grid-cols-6 w-full gap-3">
+                  <Button asChild variant="secondary" className="gap-2 rounded-lg transition-all col-span-5">
                     <Link href={`/projects/${db.projectId}/databases`}>
                       Gestionar en Proyecto <ExternalLink className="w-4 h-4 ml-1" />
                     </Link>
+                  </Button>
+                  <Button 
+                    variant="destructive" 
+                    className="rounded-lg h-full px-0 w-full"
+                    onClick={() => setDeleteModalDb({ id: db.id, name: db.name, coolifyUuid: db.config?.coolify_uuid })}
+                  >
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               </CardContent>
