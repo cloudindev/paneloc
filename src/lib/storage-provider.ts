@@ -15,7 +15,10 @@ import {
 } from "@aws-sdk/client-s3";
 
 function getS3Client() {
-  const endpoint = process.env.MINIO_ENDPOINT || 'https://s3.oladc.com';
+  // El endpoint público (s3.oladc.com) a veces sufre de Hairpin NAT / ECONNREFUSED 
+  // si el servidor backend está en la misma red y ataca a la IP pública externa.
+  // MINIO_INTERNAL_ENDPOINT permite decirle al SDK que tire contra la IP privada (ej. http://192.168.100.40:9000)
+  const endpoint = process.env.MINIO_INTERNAL_ENDPOINT || process.env.MINIO_ENDPOINT || 'https://s3.oladc.com';
   const region = process.env.MINIO_REGION || 'eu-west-1';
   const accessKeyId = process.env.MINIO_ROOT_USER || '';
   const secretAccessKey = process.env.MINIO_ROOT_PASSWORD || '';
