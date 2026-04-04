@@ -136,12 +136,13 @@ export async function addDomainToResource(resourceId: string, newDomain: string,
     // Preparar el string de dominios de forma segura
     let currentFqdnStr = config.custom_fqdn || ""
     const cleanDomain = newDomain.trim().toLowerCase().replace(/^https?:\/\//, "")
-    // Coolify expects full URLs natively usually, but will accept custom naked domains. Better to enforce standard:
-    let newFqdnUrl = `https://${cleanDomain}` 
+    // According to some troubleshooting, passing https:// might trigger prohibited logic in some versions.
+    // However, the UI and API natively accept and prepend https if missing. Let's send strictly naked domains.
+    let newFqdnUrl = cleanDomain 
     
     // Regla de usuario: Orientación automática a WWW
     if (includeWww && !cleanDomain.startsWith("www.")) {
-      newFqdnUrl += `,https://www.${cleanDomain}`
+      newFqdnUrl += `,www.${cleanDomain}`
     }
 
     // Revisar duplicado
