@@ -154,8 +154,8 @@ export async function addDomainToResource(resourceId: string, newDomain: string,
     // Fetch the dynamic helper
     const { coolifyFetch } = await import("@/app/actions/coolify")
     
-    // Impactamos a Coolify con la Key correcta 'domains'
-    await coolifyFetch("PATCH", `/applications/${config.coolify_uuid}`, { domains: updatedFqdnStr })
+    // Impactamos a Coolify con la Key correcta 'fqdn'
+    await coolifyFetch("PATCH", `/applications/${config.coolify_uuid}`, { fqdn: updatedFqdnStr })
 
     // Si Coolify responde ok (no lanza Excepción), sincronizamos nuestra DB local:
     const updatedConfig = { ...config, custom_fqdn: updatedFqdnStr }
@@ -221,7 +221,7 @@ export async function removeDomainFromResource(resourceId: string, domainToRemov
     const updatedFqdnStr = filteredArray.join(',')
 
     const { coolifyFetch } = await import("@/app/actions/coolify")
-    await coolifyFetch("PATCH", `/applications/${config.coolify_uuid}`, { domains: updatedFqdnStr })
+    await coolifyFetch("PATCH", `/applications/${config.coolify_uuid}`, { fqdn: updatedFqdnStr })
 
     const updatedConfig = { ...config, custom_fqdn: updatedFqdnStr }
     await prisma.resource.update({
