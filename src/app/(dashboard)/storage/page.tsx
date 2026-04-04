@@ -53,11 +53,14 @@ export default async function GeneralStoragePage() {
   })
 
   const buckets = bucketsRaw.map(bucket => {
-    const defaultApp = appResources.find(app => app.projectId === bucket.projectId)
+    const relatedApps = appResources.filter(app => app.projectId === bucket.projectId)
+    const appNames = relatedApps.length > 0 ? relatedApps.map(a => a.name).join(", ") : null
+    const firstApp = relatedApps.length > 0 ? relatedApps[0] : null
+    
     return {
       ...bucket,
-      uiProjectName: defaultApp?.name || bucket.project?.name || "Sin Proyecto",
-      uiLinkHref: defaultApp ? `/projects/${defaultApp.id}/storage` : `/projects`
+      uiProjectName: appNames ? `Apps: ${appNames}` : (bucket.project?.name || "Sin Proyecto"),
+      uiLinkHref: firstApp ? `/projects/${firstApp.id}/storage` : `/projects`
     }
   })
 
