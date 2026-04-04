@@ -569,9 +569,20 @@ async function _getAppUuidSafe(resourceId: string) {
   const session = await verifyJWT(token)
   if (!session || !session.sub) throw new Error("Sesión inválida")
 
-  const resource = await prisma.resource.findUnique({
+  let resource = await prisma.resource.findUnique({
     where: { id: resourceId }
   })
+
+  // Falback for routing change: If resourceId is actually a Project ID, get the project's primary resource
+  if (!resource) {
+    const project = await prisma.project.findUnique({
+      where: { id: resourceId },
+      include: { resources: true }
+    })
+    if (project && project.resources && project.resources.length > 0) {
+      resource = project.resources[0]
+    }
+  }
 
   if (!resource) throw new Error("Recurso no encontrado.")
   const config = typeof resource.config === "string" ? JSON.parse(resource.config) : resource.config
