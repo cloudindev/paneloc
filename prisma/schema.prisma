@@ -19,18 +19,20 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members     OrganizationMember[]
-  projects    Project[]
+  members      OrganizationMember[]
+  projects     Project[]
   integrations Integration[]
 
   githubInstallationId String?
+  storageBuckets       StorageBucket[]
+  storageCredentials   StorageCredential[]
 }
 
 model User {
   id        String   @id @default(cuid())
   name      String?
   email     String   @unique
-  password  String   // Hash
+  password  String // Hash
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -46,17 +48,17 @@ enum Role {
 }
 
 model OrganizationMember {
-  id             String       @id @default(cuid())
-  role           Role         @default(MEMBER)
-  
-  userId         String
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  id   String @id @default(cuid())
+  role Role   @default(MEMBER)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, organizationId]) // Un usuario solo puede tener una membresía por organización
   @@index([organizationId])
@@ -68,18 +70,19 @@ model OrganizationMember {
 // ----------------------------------------------------------------------------
 
 model Project {
-  id             String       @id @default(cuid())
-  name           String
-  description    String?
-  status         String       @default("active") // active, suspended
-  
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  status      String  @default("active") // active, suspended
+
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  resources      Resource[]
+  resources Resource[]
 
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  storageBuckets StorageBucket[]
 
   @@index([organizationId])
 }
@@ -93,19 +96,19 @@ enum ResourceType {
 }
 
 model Resource {
-  id          String       @id @default(cuid())
-  name        String
-  type        ResourceType
-  status      String       @default("pending") // pending, starting, running, stopped, error
-  
-  // Configuraciones específicas del recurso en formato JSON (ej. RAM, vCPU, región, URI de red privada)
-  config      Json         @default("{}")
-  
-  projectId   String
-  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id     String       @id @default(cuid())
+  name   String
+  type   ResourceType
+  status String       @default("pending") // pending, starting, running, stopped, error
 
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  // Configuraciones específicas del recurso en formato JSON (ej. RAM, vCPU, región, URI de red privada)
+  config Json @default("{}")
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([projectId])
 }
@@ -115,22 +118,75 @@ model Resource {
 // ----------------------------------------------------------------------------
 
 model Integration {
-  id              String       @id @default(cuid())
-  provider        String       // Ej. "github"
-  providerId      String       // ID de usuario en GitHub
-  accessToken     String
-  refreshToken    String?
-  
-  userId          String?
-  user            User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  organizationId  String?
-  organization    Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  id           String  @id @default(cuid())
+  provider     String // Ej. "github"
+  providerId   String // ID de usuario en GitHub
+  accessToken  String
+  refreshToken String?
 
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([provider, providerId])
   @@index([userId])
   @@index([organizationId])
+}
+
+// ----------------------------------------------------------------------------
+// S3 COMPATIBLE OBJECT STORAGE
+// ----------------------------------------------------------------------------
+
+model StorageBucket {
+  id         String @id @default(cuid())
+  name       String @unique // S3 Bucket Names must be globally unique
+  provider   String @default("MINIO")
+  endpoint   String @default("s3.oladc.com")
+  region     String @default("eu-west-1") // Logical Region
+  accessMode String @default("PRIVATE") // PRIVATE or PUBLIC
+
+  quotaBytes  BigInt?
+  status      String  @default("ACTIVE") // ACTIVE, DELETING
+  objectCount Int     @default(0)
+  sizeBytes   BigInt  @default(0)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  credentials StorageCredential[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([projectId])
+}
+
+model StorageCredential {
+  id                 String    @id @default(cuid())
+  label              String // Ej: "Dev Upload API Key"
+  accessKey          String    @unique
+  secretKeyEncrypted String    @db.Text // CIFRADO, needs @db.Text for long encrypted strings
+  isActive           Boolean   @default(true)
+  lastUsedAt         DateTime?
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  bucketId String?
+  bucket   StorageBucket? @relation(fields: [bucketId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([bucketId])
 }
