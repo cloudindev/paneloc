@@ -87,6 +87,11 @@ export async function getAllDomains() {
 
             domainPromises.push(verifyDns())
           })
+        } else if (res.type === "POSTGRES_DB" && config?.custom_fqdn) {
+           // Cleanup stray custom_fqdn from buggy older syncs
+           const cleanConfig = { ...config }
+           delete cleanConfig.custom_fqdn
+           prisma.resource.update({ where: { id: res.id }, data: { config: cleanConfig } }).catch(() => {})
         }
       })
     })
