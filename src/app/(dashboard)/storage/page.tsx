@@ -33,7 +33,11 @@ export default async function GeneralStoragePage() {
 
   // Recopilamos todos los buckets y credenciales de la organización
   const buckets = await db.storageBucket.findMany({
-    where: { organizationId },
+    where: {
+      project: {
+        organizationId: organizationId
+      }
+    },
     include: { project: true },
     orderBy: { createdAt: "desc" }
   })

@@ -7,13 +7,14 @@ export const dynamic = "force-dynamic"
 
 export default async function StoragePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  // Verificamos proyecto y tenant
-  const project = await db.project.findUnique({
+  // En OLA Cloud la URL [id] equivale a un Resource (que cuelga de un Project)
+  const resource = await db.resource.findUnique({
     where: { id },
-    include: { organization: true }
+    include: { project: { include: { organization: true } } }
   });
 
-  if (!project) return redirect("/projects");
+  if (!resource || !resource.project) return redirect("/projects");
+  const project = resource.project;
 
   // Fetch Bucket for Project (if exists)
   const bucket = await db.storageBucket.findFirst({
