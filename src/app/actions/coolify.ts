@@ -347,7 +347,17 @@ export async function deleteDatabaseFromCoolify(resourceId: string, coolifyUuid:
       docker_cleanup: 'true'
     }).toString()
 
-    await coolifyFetch("DELETE", `/databases/${coolifyUuid}?${query}`)
+    if (coolifyUuid && coolifyUuid !== "undefined") {
+      try {
+        await coolifyFetch("DELETE", `/databases/${coolifyUuid}?${query}`)
+      } catch (e: any) {
+        // If it's 404, it means it's already gone from Coolify (or never existed).
+        // Proceed to delete the zombie resource from our Prisma database.
+        if (!e.message?.includes("404")) {
+          throw e
+        }
+      }
+    }
 
     await prisma.resource.delete({
       where: { id: resourceId }
