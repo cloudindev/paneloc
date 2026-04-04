@@ -75,6 +75,7 @@ export async function getAllDomains() {
               return {
                 id: `${res.id}-${idx}`,
                 resourceId: res.id,
+                projectId: proj.id,
                 name: domain,
                 project: res.name,
                 type: isInternal ? "internal" : (isWildcard ? "wildcard" : "custom"),
@@ -108,10 +109,20 @@ export async function addDomainToResource(resourceId: string, newDomain: string,
     const session = await verifyJWT(token)
     if (!session || !session.sub) throw new Error("Sesión inválida")
 
-    const resource = await prisma.resource.findUnique({
+    let resource = await prisma.resource.findUnique({
       where: { id: resourceId },
       include: { project: { include: { organization: { include: { members: { where: { userId: session.sub } } } } } } }
     })
+
+    if (!resource) {
+      const project = await prisma.project.findUnique({
+        where: { id: resourceId },
+        include: { resources: { include: { project: { include: { organization: { include: { members: { where: { userId: session.sub } } } } } } } } }
+      })
+      if (project && project.resources && project.resources.length > 0) {
+        resource = project.resources[0]
+      }
+    }
 
     if (!resource || resource.project.organization.members.length === 0) {
       throw new Error("Recurso no encontrado o sin acceso")
@@ -171,10 +182,20 @@ export async function removeDomainFromResource(resourceId: string, domainToRemov
     const session = await verifyJWT(token)
     if (!session || !session.sub) throw new Error("Sesión inválida")
 
-    const resource = await prisma.resource.findUnique({
+    let resource = await prisma.resource.findUnique({
       where: { id: resourceId },
       include: { project: { include: { organization: { include: { members: { where: { userId: session.sub } } } } } } }
     })
+
+    if (!resource) {
+      const project = await prisma.project.findUnique({
+        where: { id: resourceId },
+        include: { resources: { include: { project: { include: { organization: { include: { members: { where: { userId: session.sub } } } } } } } } }
+      })
+      if (project && project.resources && project.resources.length > 0) {
+        resource = project.resources[0]
+      }
+    }
 
     if (!resource || resource.project.organization.members.length === 0) {
       throw new Error("Recurso no encontrado o sin acceso")
