@@ -84,10 +84,10 @@ export function GlobalDatabasesView({ databases }: { databases: any[] }) {
               ¿Seguro que quieres eliminar <strong>{deleteModalDb.name}</strong>? Se destruirá permanentemente de Coolify y de OLA Cloud.
             </p>
             <div className="flex justify-center gap-3 w-full">
-              <Button variant="outline" className="flex-1" onClick={() => setDeleteModalDb(null)} disabled={isDeleting !== null}>
+              <Button variant="outline" className="flex-1" onClick={() => setDeleteModalDb(null)} disabled={isDeleting}>
                 Cancelar
               </Button>
-              <Button onClick={confirmDeleteDb} disabled={isDeleting !== null} className="flex-1 bg-red-600 hover:bg-red-700 text-white">
+              <Button onClick={confirmDeleteDb} disabled={isDeleting} className="flex-1 bg-red-600 hover:bg-red-700 text-white">
                 {isDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 Eliminar
               </Button>
