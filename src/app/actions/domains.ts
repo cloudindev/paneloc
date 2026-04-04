@@ -117,7 +117,12 @@ export async function addDomainToResource(resourceId: string, newDomain: string,
     if (!resource) {
       const project = await prisma.project.findUnique({
         where: { id: resourceId },
-        include: { resources: { include: { project: { include: { organization: { include: { members: { where: { userId: session.sub } } } } } } } } }
+        include: { 
+          resources: { 
+            where: { type: "WEB_SERVICE" },
+            include: { project: { include: { organization: { include: { members: { where: { userId: session.sub } } } } } } } 
+          } 
+        }
       })
       if (project && project.resources && project.resources.length > 0) {
         resource = project.resources[0]
@@ -202,7 +207,12 @@ export async function removeDomainFromResource(resourceId: string, domainToRemov
     if (!resource) {
       const project = await prisma.project.findUnique({
         where: { id: resourceId },
-        include: { resources: { include: { project: { include: { organization: { include: { members: { where: { userId: session.sub } } } } } } } } }
+        include: { 
+          resources: { 
+            where: { type: "WEB_SERVICE" },
+            include: { project: { include: { organization: { include: { members: { where: { userId: session.sub } } } } } } } 
+          } 
+        }
       })
       if (project && project.resources && project.resources.length > 0) {
         resource = project.resources[0]
