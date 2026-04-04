@@ -34,16 +34,29 @@ export default async function DatabasesPage() {
     }
   })
 
+  // Fetch all app resources to resolve linked_app names
+  const allApps = await prisma.resource.findMany({
+    where: { type: "WEB_SERVICE" },
+    select: { id: true, name: true }
+  })
+  const appMap = new Map(allApps.map(a => [a.id, a.name]))
+
   // Sanitize the config since it's stored as JSON
-  const serialized = databases.map(db => ({
-    id: db.id,
-    name: db.name,
-    type: db.type,
-    status: db.status,
-    projectId: db.projectId,
-    project: db.project ? { name: db.project.name } : null,
-    config: typeof db.config === 'string' ? JSON.parse(db.config) : (db.config || {})
-  }))
+  const serialized = databases.map(db => {
+    const config = typeof db.config === 'string' ? JSON.parse(db.config) : (db.config || {})
+    const linkedAppId = config.linked_app
+    const linkedAppName = linkedAppId ? appMap.get(linkedAppId) : null
+
+    return {
+      id: db.id,
+      name: db.name,
+      type: db.type,
+      status: db.status,
+      projectId: linkedAppId || db.projectId,
+      project: { name: linkedAppName || (db.project ? db.project.name : "Desconocido") },
+      config
+    }
+  })
 
   // Deduplicar bases de datos que en realidad son la misma conexión compartida (mismo UUID o nombre)
   const uniqueDbList = serialized;
