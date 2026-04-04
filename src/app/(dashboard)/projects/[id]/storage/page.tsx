@@ -5,10 +5,11 @@ import { redirect } from "next/navigation"
 
 export const dynamic = "force-dynamic"
 
-export default async function StoragePage({ params }: { params: { id: string } }) {
+export default async function StoragePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   // Verificamos proyecto y tenant
   const project = await db.project.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { organization: true }
   });
 
