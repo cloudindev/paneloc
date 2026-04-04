@@ -56,7 +56,7 @@ export function GlobalDatabasesView({ databases }: { databases: any[] }) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filtered.map(db => (
-            <Card key={db.id} className="border-border/50 bg-card/40 backdrop-blur-sm relative group rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between aspect-square hover:border-primary/50 transition-colors">
+            <Card key={db.id} className="border-border/50 bg-card/40 backdrop-blur-sm relative group rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between hover:border-primary/50 transition-colors min-h-[220px]">
               <CardHeader className="py-6 flex-1">
                 <div className="flex justify-between items-start mb-4">
                   <div className="w-14 h-14 rounded-xl text-blue-400 bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shadow-sm">
