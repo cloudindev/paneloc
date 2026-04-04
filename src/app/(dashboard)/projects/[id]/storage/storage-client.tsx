@@ -1,6 +1,7 @@
 "use client"
 
-import React, { useState } from "react"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { 
   createCloudBucket, 
   deleteCloudBucket, 
@@ -12,6 +13,7 @@ import { Loader2, HardDrive, Lock, Globe, KeyRound, Copy, CopyCheck, Trash2 } fr
 import { toast } from "sonner"
 
 export default function StorageClient({ project, bucket, credentials }: { project: any, bucket: any, credentials: any[] }) {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
   const [newKey, setNewKey] = useState<any>(null)
@@ -29,13 +31,24 @@ export default function StorageClient({ project, bucket, credentials }: { projec
 
   const handleDeleteBucket = async () => {
     if (!bucket) return
-    if(!confirm("Are you sure? This will delete all files inside the bucket permanently.")) return;
     
-    setLoading(true)
-    const res = await deleteCloudBucket(bucket.id, project.id)
-    if (res?.success) toast.success("Bucket deleted successfully")
-    else toast.error(res?.error || "Error deleting bucket")
-    setLoading(false)
+    toast("Delete Bucket?", {
+      description: "Are you sure? This will delete all files inside the bucket permanently.",
+      action: {
+        label: "Confirm Delete",
+        onClick: async () => {
+          setLoading(true)
+          const res = await deleteCloudBucket(bucket.id, project.id)
+          if (res?.success) toast.success("Bucket deleted successfully")
+          else toast.error(res?.error || "Error deleting bucket")
+          setLoading(false)
+        }
+      },
+      cancel: {
+        label: "Cancel",
+        onClick: () => {}
+      }
+    })
   }
 
   const handleToggleVisibility = async (isPublic: boolean) => {
@@ -53,6 +66,7 @@ export default function StorageClient({ project, bucket, credentials }: { projec
     if (res?.success) {
       toast.success("Key generated successfully")
       setNewKey(res.credential)
+      router.refresh()
     } else {
       toast.error(res?.error || "Error generating key")
     }
@@ -259,11 +273,23 @@ export default function StorageClient({ project, bucket, credentials }: { projec
                          <td className="px-6 py-3 text-muted-foreground">{new Date(cred.createdAt).toLocaleDateString()}</td>
                          <td className="px-6 py-3 text-right">
                            <button 
-                             onClick={async () => {
-                               if(confirm("Revoke key? Applications using this will fail to authenticate.")) {
-                                  await deleteTenantCredential(cred.id)
-                                  window.location.reload()
-                               }
+                             onClick={(e) => {
+                               e.preventDefault();
+                               toast("Revoke Key?", {
+                                 description: "Applications using this key will immediately fail to authenticate.",
+                                 action: {
+                                    label: "Revoke",
+                                    onClick: async () => {
+                                      const res = await deleteTenantCredential(cred.id)
+                                      if (res?.success) window.location.reload()
+                                      else toast.error(res?.error || "Error revoking key")
+                                    }
+                                 },
+                                 cancel: {
+                                    label: "Cancel",
+                                    onClick: () => {}
+                                 }
+                               })
                              }}
                              className="text-muted-foreground hover:text-red-500 transition-colors p-1"
                              title="Revoke Key"
