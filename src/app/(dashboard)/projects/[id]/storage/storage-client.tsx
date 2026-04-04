@@ -9,6 +9,7 @@ import {
   deleteTenantCredential
 } from "@/app/actions/storage"
 import { Loader2, HardDrive, Lock, Globe, KeyRound, Copy, CopyCheck, Trash2 } from "lucide-react"
+import { toast } from "sonner"
 
 export default function StorageClient({ project, bucket, credentials }: { project: any, bucket: any, credentials: any[] }) {
   const [loading, setLoading] = useState(false)
@@ -21,8 +22,8 @@ export default function StorageClient({ project, bucket, credentials }: { projec
     
     // Mostramos estado loading, pero OLA asume que se hace con Server Action
     const res = await createCloudBucket(project.id, name, false)
-    if (res?.success) alert("Bucket created successfully!")
-    else alert(res?.error || "Error creating bucket")
+    if (res?.success) toast.success("Bucket created successfully!")
+    else toast.error(res?.error || "Error creating bucket")
     setLoading(false)
   }
 
@@ -32,8 +33,8 @@ export default function StorageClient({ project, bucket, credentials }: { projec
     
     setLoading(true)
     const res = await deleteCloudBucket(bucket.id, project.id)
-    if (res?.success) alert("Bucket deleted successfully")
-    else alert(res?.error || "Error deleting bucket")
+    if (res?.success) toast.success("Bucket deleted successfully")
+    else toast.error(res?.error || "Error deleting bucket")
     setLoading(false)
   }
 
@@ -41,8 +42,8 @@ export default function StorageClient({ project, bucket, credentials }: { projec
     if (!bucket) return
     setLoading(true)
     const res = await toggleBucketVisibility(bucket.id, isPublic, project.id)
-    if (res?.success) alert("Visibility updated!")
-    else alert(res?.error || "Error updating visibility")
+    if (res?.success) toast.success(`Visibility updated to ${isPublic ? 'Public' : 'Private'}!`)
+    else toast.error(res?.error || "Error updating visibility")
     setLoading(false)
   }
 
@@ -50,10 +51,10 @@ export default function StorageClient({ project, bucket, credentials }: { projec
     setLoading(true)
     const res = await generateTenantCredential(project.organizationId, `Access Key ${new Date().toLocaleDateString()}`)
     if (res?.success) {
-      alert("Key generated successfully")
+      toast.success("Key generated successfully")
       setNewKey(res.credential)
     } else {
-      alert(res?.error || "Error generating key")
+      toast.error(res?.error || "Error generating key")
     }
     setLoading(false)
   }
@@ -62,7 +63,7 @@ export default function StorageClient({ project, bucket, credentials }: { projec
     navigator.clipboard.writeText(text)
     setCopied(id)
     setTimeout(() => setCopied(null), 2000)
-    alert("Copied to clipboard")
+    toast.success("Copied to clipboard")
   }
 
   if (!bucket) {

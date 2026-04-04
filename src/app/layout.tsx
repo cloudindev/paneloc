@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   description: "Manage your Next.js, Node.js, Python, and Docker apps with ease on our premium infrastructure.",
 };
 
+import { Toaster } from 'sonner';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -19,6 +21,7 @@ export default function RootLayout({
     <html lang="es" className="dark" suppressHydrationWarning>
       <body className={cn("min-h-screen bg-background font-sans antialiased", inter.variable)}>
         {children}
+        <Toaster richColors position="top-center" theme="dark" />
       </body>
     </html>
   );
