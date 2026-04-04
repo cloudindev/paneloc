@@ -63,6 +63,9 @@ export default function ProjectDomainsPage({ params }: { params: Promise<{ id: s
     const res = await addDomainToResource(formProjectId, formDomain, formIncludeWww)
     
     if (res.success) {
+      if (res.warning) {
+        alert(res.warning) // Mostramos el warning de la limitación del API de Coolify
+      }
       await fetchAll()
       setModalStep(2) // Pasamos al paso de instrucciones DNS
     } else {

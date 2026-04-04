@@ -155,10 +155,21 @@ export async function addDomainToResource(resourceId: string, newDomain: string,
     // Fetch the dynamic helper
     const { coolifyFetch } = await import("@/app/actions/coolify")
     
-    // Impactamos a Coolify con la Key correcta 'fqdn'
-    await coolifyFetch("PATCH", `/applications/${config.coolify_uuid}`, { fqdn: updatedFqdnStr })
+    let coolifySyncSuccess = true
+    let coolifyWarning = ""
 
-    // Si Coolify responde ok (no lanza Excepción), sincronizamos nuestra DB local:
+    try {
+      await coolifyFetch("PATCH", `/applications/${config.coolify_uuid}`, { fqdn: updatedFqdnStr })
+    } catch (e: any) {
+      if (e.message.includes("422") || e.message.includes("This field is not allowed")) {
+        coolifySyncSuccess = false
+        coolifyWarning = "⚠️ Sincronizado localmente, pero Coolify API beta bloqueó la asignación de FQDN. Por favor, añádelo manualmente en la UI de Coolify."
+      } else {
+        throw e
+      }
+    }
+
+    // Sincronizamos nuestra DB local independientemente de la barrera de proxy de la v4:
     const updatedConfig = { ...config, custom_fqdn: updatedFqdnStr }
     
     await prisma.resource.update({
@@ -166,7 +177,7 @@ export async function addDomainToResource(resourceId: string, newDomain: string,
       data: { config: updatedConfig }
     })
 
-    return { success: true }
+    return { success: true, warning: coolifyWarning }
 
   } catch (error: any) {
     console.error("Add domain error:", error.message)
