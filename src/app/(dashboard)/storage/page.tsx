@@ -32,7 +32,7 @@ export default async function GeneralStoragePage() {
   const organizationId = user.memberships[0].organizationId
 
   // Recopilamos todos los buckets y credenciales de la organización
-  const buckets = await db.storageBucket.findMany({
+  const bucketsRaw = await db.storageBucket.findMany({
     where: {
       project: {
         organizationId: organizationId
@@ -40,6 +40,25 @@ export default async function GeneralStoragePage() {
     },
     include: { project: true },
     orderBy: { createdAt: "desc" }
+  })
+
+  // Recopilamos todos los Web Services para mostrar el nombre real de las aplicaciones 
+  // ya que un Project ("Principal") puede contener varios recursos WEB_SERVICE.
+  const appResources = await db.resource.findMany({
+    where: {
+      type: "WEB_SERVICE",
+      project: { organizationId }
+    },
+    select: { id: true, name: true, projectId: true }
+  })
+
+  const buckets = bucketsRaw.map(bucket => {
+    const defaultApp = appResources.find(app => app.projectId === bucket.projectId)
+    return {
+      ...bucket,
+      uiProjectName: defaultApp?.name || bucket.project?.name || "Sin Proyecto",
+      uiLinkHref: defaultApp ? `/projects/${defaultApp.id}/storage` : `/projects`
+    }
   })
 
   const credentials = await db.storageCredential.findMany({
@@ -102,7 +121,7 @@ export default async function GeneralStoragePage() {
                     </div>
                   </td>
                   <td className="px-6 py-3 font-medium">
-                    {bucket.project?.name || "Sin Proyecto"}
+                    {bucket.uiProjectName}
                   </td>
                   <td className="px-6 py-3">
                     <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded flex items-center w-fit gap-1
@@ -114,7 +133,7 @@ export default async function GeneralStoragePage() {
                   </td>
                   <td className="px-6 py-3 text-right">
                     <Link 
-                      href={`/projects/${bucket.projectId}/storage`}
+                      href={bucket.uiLinkHref}
                       className="inline-flex items-center text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-muted transition-colors"
                     >
                       Configurar <ArrowRight className="w-3 h-3 ml-1" />
