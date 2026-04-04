@@ -105,7 +105,7 @@ export function GlobalDatabasesView({ databases }: { databases: any[] }) {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filtered.map(db => (
             <Card key={db.id} className="border-border/50 bg-card/40 backdrop-blur-sm relative group rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between hover:border-primary/50 transition-colors min-h-[220px]">
               <CardHeader className="py-6 flex-1">
@@ -139,15 +139,15 @@ export function GlobalDatabasesView({ databases }: { databases: any[] }) {
                     {db.config?.connection_uri || "N/A"}
                   </code>
                 </div>
-                <div className="grid grid-cols-6 w-full gap-3">
-                  <Button asChild variant="secondary" className="gap-2 rounded-lg transition-all col-span-5">
+                <div className="flex w-full gap-2">
+                  <Button asChild variant="secondary" className="gap-2 rounded-lg transition-all flex-1">
                     <Link href={`/projects/${db.projectId}/databases`}>
                       Gestionar en Proyecto <ExternalLink className="w-4 h-4 ml-1" />
                     </Link>
                   </Button>
                   <Button 
-                    variant="destructive" 
-                    className="rounded-lg h-full px-0 w-full"
+                    variant="outline" 
+                    className="rounded-lg h-10 w-10 shrink-0 p-0 bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:text-red-500 border-red-500/20 hover:border-red-500/30 transition-colors"
                     onClick={() => setDeleteModalDb({ id: db.id, name: db.name, coolifyUuid: db.config?.coolify_uuid })}
                   >
                     <Trash2 className="w-4 h-4" />
