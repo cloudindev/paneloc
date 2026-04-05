@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Globe, Plus, ShieldCheck, ShieldAlert, Check, Loader2, X, Trash2 } from "lucide-react"
+import { Globe, Plus, ShieldCheck, ShieldAlert, Check, Loader2, X, Trash2, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -30,7 +30,7 @@ export default function DomainsPage() {
   const [formSaving, setFormSaving] = React.useState(false)
   const [deletingId, setDeletingId] = React.useState<string | null>(null)
 
-  const [modalStep, setModalStep] = React.useState<1 | 2>(1)
+  const [modalStep, setModalStep] = React.useState<1 | 2 | 3>(1)
 
   const fetchAll = async () => {
     setLoading(true)
@@ -278,7 +278,7 @@ export default function DomainsPage() {
                   </Button>
                 </div>
               </>
-            ) : (
+            ) : modalStep === 2 ? (
               <div className="space-y-6 text-center">
                 <div className="mx-auto w-12 h-12 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mb-2">
                   <Check className="w-6 h-6" />
@@ -329,8 +329,26 @@ export default function DomainsPage() {
                  </div>
                 )}
 
-                <Button onClick={() => setIsModalOpen(false)} className="w-full mt-4 font-medium">
+                <Button onClick={() => setModalStep(3)} className="w-full mt-4 font-medium">
                   Entendido, ya lo he configurado
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-6 text-center">
+                <div className="mx-auto w-12 h-12 bg-amber-500/20 text-amber-500 rounded-full flex items-center justify-center mb-2">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-foreground mb-1">
+                    ¡Casi listo! Acción Requerida
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Para que los cambios de dominio surtan efecto internamente, debes ir a tu panel de Coolify y hacer clic en <strong>Restart</strong> o <strong>Redeploy</strong> sobre tu aplicación. Si no lo haces, la web cargará como "No Available Server".
+                  </p>
+                </div>
+
+                <Button onClick={() => setIsModalOpen(false)} className="w-full mt-4 font-medium bg-amber-600 hover:bg-amber-700 text-white">
+                  Entendido, ¡voy a reiniciar ahora!
                 </Button>
               </div>
             )}

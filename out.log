@@ -1,0 +1,20 @@
+PrismaClientInitializationError: 
+Invalid `prisma.resource.findMany()` invocation in
+/Users/luis/_Dev/panel.olacloud.es/fix-and-check.ts:5:45
+
+  2 const prisma = new PrismaClient()
+  3 async function run() {
+  4   try {
+→ 5     const resources = await prisma.resource.findMany(
+Can't reach database server at `192.168.100.20:5432`
+
+Please make sure your database server is running at `192.168.100.20:5432`.
+    at ei.handleRequestError (/Users/luis/_Dev/panel.olacloud.es/node_modules/@prisma/client/src/runtime/RequestHandler.ts:242:13)
+    at ei.handleAndLogRequestError (/Users/luis/_Dev/panel.olacloud.es/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at ei.request (/Users/luis/_Dev/panel.olacloud.es/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at async a (/Users/luis/_Dev/panel.olacloud.es/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
+    at async run (/Users/luis/_Dev/panel.olacloud.es/fix-and-check.ts:5:23) {
+  clientVersion: '6.19.2',
+  errorCode: undefined,
+  retryable: undefined
+}
