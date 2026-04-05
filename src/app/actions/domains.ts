@@ -169,7 +169,7 @@ export async function addDomainToResource(resourceId: string, newDomain: string,
     let coolifyWarning = ""
 
     try {
-      await coolifyFetch("PATCH", `/applications/${config.coolify_uuid}`, { fqdn: updatedFqdnStr })
+      await coolifyFetch("PATCH", `/applications/${config.coolify_uuid}`, { domains: updatedFqdnStr })
     } catch (e: any) {
       if (e.message.includes("422") || e.message.includes("This field is not allowed")) {
         coolifySyncSuccess = false
@@ -248,7 +248,7 @@ export async function removeDomainFromResource(resourceId: string, domainToRemov
     const updatedFqdnStr = filteredArray.join(',')
 
     const { coolifyFetch } = await import("@/app/actions/coolify")
-    await coolifyFetch("PATCH", `/applications/${config.coolify_uuid}`, { fqdn: updatedFqdnStr })
+    await coolifyFetch("PATCH", `/applications/${config.coolify_uuid}`, { domains: updatedFqdnStr })
 
     const updatedConfig = { ...config, custom_fqdn: updatedFqdnStr }
     await prisma.resource.update({
