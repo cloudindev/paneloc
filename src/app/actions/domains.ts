@@ -159,12 +159,15 @@ export async function addDomainToResource(resourceId: string, newDomain: string,
       newFqdnUrl += `,www.${cleanDomain}`
     }
 
-    // Revisar duplicado
+    // Revisar duplicado y forzar re-sincronización si ya existe
+    let isAlreadyInPrisma = false
     if (currentFqdnStr.includes(cleanDomain)) {
-      throw new Error("Este dominio ya está asignado al proyecto")
+      isAlreadyInPrisma = true
     }
 
-    const updatedFqdnStr = currentFqdnStr ? `${currentFqdnStr},${newFqdnUrl}` : newFqdnUrl
+    const updatedFqdnStr = isAlreadyInPrisma 
+      ? currentFqdnStr 
+      : (currentFqdnStr ? `${currentFqdnStr},${newFqdnUrl}` : newFqdnUrl)
 
     // Fetch the dynamic helper
     const { coolifyFetch } = await import("@/app/actions/coolify")
