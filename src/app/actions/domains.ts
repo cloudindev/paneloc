@@ -262,7 +262,11 @@ export async function removeDomainFromResource(resourceId: string, domainToRemov
     const updatedFqdnStr = filteredArray.join(',')
 
     const { coolifyFetch } = await import("@/app/actions/coolify")
-    await coolifyFetch("PATCH", `/applications/${config.coolify_uuid}`, { domains: updatedFqdnStr })
+    try {
+      await coolifyFetch("PATCH", `/applications/${config.coolify_uuid}`, { domains: updatedFqdnStr })
+    } catch (e: any) {
+      console.warn("Coolify API erró al borrar el dominio (falla silenciosa para limpiar DB local):", e.message)
+    }
 
     const updatedConfig = { ...config, custom_fqdn: updatedFqdnStr }
     await prisma.resource.update({
