@@ -87,8 +87,12 @@ export async function removeMinioUser(accessKey: string) {
     await execAsync(`${mc} alias set ${alias} ${endpoint} ${rootUser} ${rootPass}`)
     await execAsync(`${mc} admin user remove ${alias} ${accessKey}`)
   } catch (error: any) {
-    console.error("[Storage] Error removing MinIO user:", error)
-    throw new Error(`MinIO Admin Error: ${error.message}`)
+    if (error.message && error.message.includes("The specified user does not exist")) {
+      console.warn(`[Storage] MinIO user ${accessKey} did not exist. Skipping removal.`);
+    } else {
+      console.error("[Storage] Error removing MinIO user:", error)
+      throw new Error(`MinIO Admin Error: ${error.message}`)
+    }
   } finally {
     exec(`${mc} alias remove ${alias}`, () => {}).unref()
   }
