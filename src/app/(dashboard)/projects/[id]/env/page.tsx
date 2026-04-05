@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Eye, EyeOff, Plus, Key, Lock, Trash2, Edit, Loader2, Save } from "lucide-react"
+import { Eye, EyeOff, Plus, Key, Lock, Trash2, Edit, Loader2, Save, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -24,6 +24,7 @@ export default function ProjectEnvVarsPage({ params }: { params: Promise<{ id: s
   
   // Dialog State
   const [dialogOpen, setDialogOpen] = React.useState(false)
+  const [dialogStep, setDialogStep] = React.useState<1 | 2>(1)
   const [editingEnv, setEditingEnv] = React.useState<any | null>(null)
   const [formKey, setFormKey] = React.useState("")
   const [formValue, setFormValue] = React.useState("")
@@ -57,6 +58,7 @@ export default function ProjectEnvVarsPage({ params }: { params: Promise<{ id: s
     setFormKey("")
     setFormValue("")
     setFormIsSecret(false)
+    setDialogStep(1)
     setDialogOpen(true)
   }
 
@@ -65,6 +67,7 @@ export default function ProjectEnvVarsPage({ params }: { params: Promise<{ id: s
     setFormKey(env.key)
     setFormValue(env.value)
     setFormIsSecret(env.is_literal || false) // coolify 'is_literal' maps to secrets if set to hide, but we use logic
+    setDialogStep(1)
     setDialogOpen(true)
   }
 
@@ -81,8 +84,8 @@ export default function ProjectEnvVarsPage({ params }: { params: Promise<{ id: s
     }
 
     if (res?.success) {
-      setDialogOpen(false)
       await fetchEnvs()
+      setDialogStep(2)
     } else {
       alert("Error guardando variable: " + res?.error)
     }
@@ -235,79 +238,101 @@ export default function ProjectEnvVarsPage({ params }: { params: Promise<{ id: s
       {dialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in">
           <div className="bg-card border border-border rounded-xl shadow-lg w-full max-w-lg overflow-hidden animate-in zoom-in-95">
-            <div className="p-6 border-b border-border/50">
-              <h2 className="text-xl font-semibold">{editingEnv ? "Editar" : "Añadir"} Variable de Entorno</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                Configura pares clave-valor inyectados durante "build" y "runtime".
-              </p>
-            </div>
-            
-            <div className="p-6 space-y-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Key</label>
-                <Input 
-                  placeholder="NEXT_PUBLIC_API_URL" 
-                  value={formKey} 
-                  onChange={e => setFormKey(e.target.value)} 
-                  className="font-mono bg-background/50"
-                  spellCheck={false}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Valor</label>
-                <div className="relative">
-                  <Input 
-                    type={showFormValue ? "text" : "password"}
-                    placeholder="https://api.dominio.com" 
-                    value={formValue} 
-                    onChange={e => setFormValue(e.target.value)} 
-                    className="font-mono bg-background/50 pr-10"
-                    spellCheck={false}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowFormValue(!showFormValue)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {showFormValue ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
+            {dialogStep === 1 ? (
+              <>
+                <div className="p-6 border-b border-border/50">
+                  <h2 className="text-xl font-semibold">{editingEnv ? "Editar" : "Añadir"} Variable de Entorno</h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Configura pares clave-valor inyectados durante "build" y "runtime".
+                  </p>
                 </div>
-              </div>
-              <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/20">
-                <div className="space-y-0.5">
-                  <label className="text-sm font-medium flex items-center gap-2">
-                    <Lock className="w-4 h-4 text-emerald-500" />
-                    Encriptar como Secreto
-                  </label>
-                  <div className="text-xs text-muted-foreground">Ocultar de logs y marcar como "Is Literal"</div>
+                
+                <div className="p-6 space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Key</label>
+                    <Input 
+                      placeholder="NEXT_PUBLIC_API_URL" 
+                      value={formKey} 
+                      onChange={e => setFormKey(e.target.value)} 
+                      className="font-mono bg-background/50"
+                      spellCheck={false}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Valor</label>
+                    <div className="relative">
+                      <Input 
+                        type={showFormValue ? "text" : "password"}
+                        placeholder="https://api.dominio.com" 
+                        value={formValue} 
+                        onChange={e => setFormValue(e.target.value)} 
+                        className="font-mono bg-background/50 pr-10"
+                        spellCheck={false}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowFormValue(!showFormValue)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showFormValue ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/20">
+                    <div className="space-y-0.5">
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <Lock className="w-4 h-4 text-emerald-500" />
+                        Encriptar como Secreto
+                      </label>
+                      <div className="text-xs text-muted-foreground">Ocultar de logs y marcar como "Is Literal"</div>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={formIsSecret}
+                      onClick={() => setFormIsSecret(!formIsSecret)}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 ${
+                        formIsSecret ? "bg-primary" : "bg-input"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform ${
+                          formIsSecret ? "translate-x-5" : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={formIsSecret}
-                  onClick={() => setFormIsSecret(!formIsSecret)}
-                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 ${
-                    formIsSecret ? "bg-primary" : "bg-input"
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform ${
-                      formIsSecret ? "translate-x-5" : "translate-x-0"
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
 
-            <div className="p-4 border-t border-border/50 bg-muted/10 flex justify-end gap-3">
-              <Button variant="ghost" onClick={() => setDialogOpen(false)} disabled={formSaving}>
-                Cancelar
-              </Button>
-              <Button onClick={handleSave} disabled={formSaving || !formKey.trim()} className="gap-2">
-                {formSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                Guardar Variable
-              </Button>
-            </div>
+                <div className="p-4 border-t border-border/50 bg-muted/10 flex justify-end gap-3">
+                  <Button variant="ghost" onClick={() => setDialogOpen(false)} disabled={formSaving}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleSave} disabled={formSaving || !formKey.trim()} className="gap-2">
+                    {formSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    Guardar Variable
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="p-8 space-y-6 text-center">
+                <div className="mx-auto w-12 h-12 bg-amber-500/20 text-amber-500 rounded-full flex items-center justify-center mb-2">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-foreground mb-1">
+                    ¡Variable Guardada! Acción Requerida
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Has modificado las variables de entorno. Para que los cambios se inyecten en el contenedor de tu aplicación, debes ir a tu panel de Coolify y hacer clic en <strong>Restart</strong> o <strong>Redeploy</strong>.
+                  </p>
+                </div>
+
+                <Button onClick={() => setDialogOpen(false)} className="w-full mt-4 font-medium bg-amber-600 hover:bg-amber-700 text-white">
+                  Entendido, ¡voy a reiniciar ahora!
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       )}
