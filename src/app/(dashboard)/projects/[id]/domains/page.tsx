@@ -39,7 +39,7 @@ export default function ProjectDomainsPage({ params }: { params: Promise<{ id: s
       getAllDomains(),
       getProjectsFromDB()
     ])
-    setDomains(liveDomains.filter((d: any) => d.projectId === resourceId))
+    setDomains(liveDomains.filter((d: any) => d.resourceId === resourceId))
     setProjects(liveProjects.filter(p => p.status !== "error" && p.id === resourceId))
     setLoading(false)
   }
