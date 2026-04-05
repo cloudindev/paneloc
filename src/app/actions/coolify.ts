@@ -218,7 +218,7 @@ export async function deployToCoolify(params: {
 
     // 2.B Inyectar el FQDN mediante un update al recurso tras su creación
     try {
-      let patchPayload: any = { domains: customFqdn }
+      let patchPayload: any = { fqdn: customFqdn }
       await coolifyFetch("PATCH", `/applications/${appUuid}`, patchPayload)
     } catch (e: any) {
       console.warn("Aviso: el update del dominio falló.", e.message)

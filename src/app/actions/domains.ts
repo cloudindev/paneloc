@@ -150,13 +150,12 @@ export async function addDomainToResource(resourceId: string, newDomain: string,
     // Preparar el string de dominios de forma segura
     let currentFqdnStr = config.custom_fqdn || ""
     const cleanDomain = newDomain.trim().toLowerCase().replace(/^https?:\/\//, "")
-    // According to some troubleshooting, passing https:// might trigger prohibited logic in some versions.
-    // However, the UI and API natively accept and prepend https if missing. Let's send strictly naked domains.
-    let newFqdnUrl = cleanDomain 
+    // Coolify V4 API rechaza explícitamente "noticrm.com" con "Invalid URL". Requiere "https://noticrm.com".
+    let newFqdnUrl = `https://${cleanDomain}`
     
     // Regla de usuario: Orientación automática a WWW
     if (includeWww && !cleanDomain.startsWith("www.")) {
-      newFqdnUrl += `,www.${cleanDomain}`
+      newFqdnUrl += `,https://www.${cleanDomain}`
     }
 
     // Revisar duplicado y forzar re-sincronización si ya existe
@@ -176,7 +175,7 @@ export async function addDomainToResource(resourceId: string, newDomain: string,
     let coolifyWarning = ""
 
     try {
-      await coolifyFetch("PATCH", `/applications/${config.coolify_uuid}`, { domains: updatedFqdnStr })
+      await coolifyFetch("PATCH", `/applications/${config.coolify_uuid}`, { fqdn: updatedFqdnStr })
     } catch (e: any) {
       if (e.message.includes("422") || e.message.includes("This field is not allowed")) {
         coolifySyncSuccess = false
