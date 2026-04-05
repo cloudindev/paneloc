@@ -321,15 +321,15 @@ export default function ProjectEnvVarsPage({ params }: { params: Promise<{ id: s
                 </div>
                 <div>
                   <h3 className="text-base font-semibold text-foreground mb-1">
-                    ¡Variable Guardada! Acción Requerida
+                    Variable Saved! Action Required
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    Has modificado las variables de entorno. Para que los cambios se inyecten en el contenedor de tu aplicación, debes ir a tu panel de Coolify y hacer clic en <strong>Restart</strong> o <strong>Redeploy</strong>.
+                    You have modified environment variables. For these changes to take effect in your application's container, please go to <strong>Deployments</strong> and click on <strong>Restart</strong> or <strong>Redeploy</strong>.
                   </p>
                 </div>
 
                 <Button onClick={() => setDialogOpen(false)} className="w-full mt-4 font-medium bg-amber-600 hover:bg-amber-700 text-white">
-                  Entendido, ¡voy a reiniciar ahora!
+                  Understood, I will restart now!
                 </Button>
               </div>
             )}

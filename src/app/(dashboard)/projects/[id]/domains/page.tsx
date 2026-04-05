@@ -328,15 +328,15 @@ export default function ProjectDomainsPage({ params }: { params: Promise<{ id: s
                 </div>
                 <div>
                   <h3 className="text-base font-semibold text-foreground mb-1">
-                    ¡Casi listo! Acción Requerida
+                    Almost there! Action Required
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    Para que los cambios de dominio surtan efecto internamente, debes ir a tu panel de Coolify y hacer clic en <strong>Restart</strong> o <strong>Redeploy</strong>. Si no lo haces, la web cargará como "No Available Server".
+                    For the domain changes to take effect, please go to <strong>Deployments</strong> and click on <strong>Restart</strong> or <strong>Redeploy</strong> for your application. If you fail to do so, the domain will show a "No Available Server" error.
                   </p>
                 </div>
 
                 <Button onClick={() => setIsModalOpen(false)} className="w-full mt-4 font-medium bg-amber-600 hover:bg-amber-700 text-white">
-                  Entendido, ¡voy a reiniciar ahora!
+                  Understood, I will restart now!
                 </Button>
               </div>
             )}
