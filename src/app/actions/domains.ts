@@ -180,7 +180,9 @@ export async function addDomainToResource(resourceId: string, newDomain: string,
     } catch (e: any) {
       if (e.message.includes("422") || e.message.includes("This field is not allowed")) {
         coolifySyncSuccess = false
-        coolifyWarning = "⚠️ Sincronizado localmente, pero Coolify API beta bloqueó la asignación de FQDN. Por favor, añádelo manualmente en la UI de Coolify."
+        // Extract inner Validation logic if present to display what Coolify actually rejected.
+        const errorDetail = e.message.split("| Validation: ")[1] || e.message
+        coolifyWarning = `⚠️ Sincronizado localmente, pero Coolify API beta bloqueó la asignación de FQDN. Detalle: ${errorDetail}`
       } else {
         throw e
       }
