@@ -648,17 +648,15 @@ export async function createAppEnvVar(resourceId: string, key: string, value: st
 export async function updateAppEnvVar(resourceId: string, envUuid: string, key: string, value: string, isSecret: boolean) {
   try {
     const uuid = await _getAppUuidSafe(resourceId)
-    // Borramos primero la variable anterior para asegurar limpieza total sin bugs de Bulk Update
-    await deleteAppEnvVar(resourceId, envUuid);
     
-    // Y la recreamos
+    // Usar PATCH en la v4 para actualizar la variable sin tener que borrarla
     const body = {
       key,
       value,
       is_preview: false,
       is_literal: isSecret
     }
-    const res = await coolifyFetch("POST", `/applications/${uuid}/envs`, body) 
+    const res = await coolifyFetch("PATCH", `/applications/${uuid}/envs`, body) 
     return { success: true, data: res }
   } catch (error: any) {
     console.error("Error actualizando variable:", error)
