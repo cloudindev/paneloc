@@ -4,6 +4,7 @@ import { prisma as db } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { S3StorageProvider } from "@/lib/storage-provider"
 import { encryptString, decryptString } from "@/lib/crypto"
+import { createMinioUser, removeMinioUser } from "@/lib/minio-admin"
 
 /**
  * Creates a new S3 bucket in MinIO and records it in the database.
@@ -108,6 +109,9 @@ export async function generateTenantCredential(organizationId: string, label: st
     const accessKey = "OC" + Math.random().toString(36).substring(2, 10).toUpperCase() + Date.now().toString().slice(-4);
     const secretKey = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
+    // Call the Admin SDK wrapper to actually provision the user in the real S3 node
+    await createMinioUser(accessKey, secretKey);
+
     // Ciframos para guardar
     const encryptedSecret = encryptString(secretKey);
 
@@ -131,9 +135,16 @@ export async function generateTenantCredential(organizationId: string, label: st
 
 export async function deleteTenantCredential(id: string) {
   try {
+    const cred = await db.storageCredential.findUnique({ where: { id } });
+    if (!cred) throw new Error("Credential not found");
+
+    // Borrado físico en MinIO
+    await removeMinioUser(cred.accessKey);
+
     await db.storageCredential.delete({ where: { id } });
     return { success: true };
   } catch (e: any) {
+    console.error("Error deleting credential:", e);
     return { success: false, error: e.message };
   }
 }
