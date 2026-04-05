@@ -32,7 +32,6 @@ export function Sidebar({ projects = [] }: { projects?: any[] }) {
     { name: 'Deployments', href: currentProjectId ? `/projects/${currentProjectId}/deployments` : `/deployments`, icon: CloudLightning },
     ...(currentProjectId ? [{ name: 'Environment Variables', href: `/projects/${currentProjectId}/env`, icon: KeyRound }] : []),
     { name: 'Logs', href: currentProjectId ? `/projects/${currentProjectId}/logs` : `/logs`, icon: TerminalSquare },
-    { name: 'Observability', href: currentProjectId ? `/projects/${currentProjectId}/observability` : `/observability`, icon: Activity },
   ]
 
   const secondaryNav = [
