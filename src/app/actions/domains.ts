@@ -38,61 +38,65 @@ export async function getAllDomains() {
 
     if (!user || user.memberships.length === 0) return []
 
-    const org = user.memberships[0].organization
     const domainPromises: Promise<any>[] = []
     const TARGET_IP = "217.182.95.11" // Node IP para validación estricta
 
-    org.projects.forEach((proj: any) => {
-      proj.resources.forEach((res: any) => {
-        const config = typeof res.config === "string" ? JSON.parse(res.config) : res.config
-        
-        // El FQDN puede ser `https://domain.com,http://domain.com`
-        if (config.custom_fqdn) {
-          const domainsStr = config.custom_fqdn.replace(/https?:\/\//g, "")
-          const domainList = domainsStr.split(',').map((d: string) => d.trim()).filter(Boolean)
+    user.memberships.forEach((mem: any) => {
+      const org = mem.organization
+      if (!org?.projects) return
+
+      org.projects.forEach((proj: any) => {
+        proj.resources.forEach((res: any) => {
+          const config = typeof res.config === "string" ? JSON.parse(res.config) : res.config
           
-          domainList.forEach((domain: string, idx: number) => {
-            const isWildcard = domain.startsWith('*')
-            const isInternal = domain.endsWith('.internal')
+          // El FQDN puede ser `https://domain.com,http://domain.com`
+          if (config.custom_fqdn) {
+            const domainsStr = config.custom_fqdn.replace(/https?:\/\//g, "")
+            const domainList = domainsStr.split(',').map((d: string) => d.trim()).filter(Boolean)
             
-            const verifyDns = async () => {
-              let isVerified = false
+            domainList.forEach((domain: string, idx: number) => {
+              const isWildcard = domain.startsWith('*')
+              const isInternal = domain.endsWith('.internal')
               
-              if (isInternal) {
-                isVerified = true
-              } else if (!isWildcard) {
-                try {
-                  const ips = await dns.resolve4(domain)
-                  // Consideramos verificado si resuelve a nuestra IP (o proxy)
-                  if (ips.length > 0) {
-                    isVerified = true
+              const verifyDns = async () => {
+                let isVerified = false
+                
+                if (isInternal) {
+                  isVerified = true
+                } else if (!isWildcard) {
+                  try {
+                    const ips = await dns.resolve4(domain)
+                    // Consideramos verificado si resuelve a nuestra IP (o proxy)
+                    if (ips.length > 0) {
+                      isVerified = true
+                    }
+                  } catch {
+                    isVerified = false
                   }
-                } catch {
-                  isVerified = false
+                }
+
+                return {
+                  id: `${res.id}-${idx}`,
+                  resourceId: res.id,
+                  projectId: proj.id,
+                  name: domain,
+                  project: res.name,
+                  type: isInternal ? "internal" : (isWildcard ? "wildcard" : "custom"),
+                  // Certificado y status DNS validados mediante resolución real
+                  ssl: isVerified ? "active" : "pending",
+                  status: isVerified ? "verified" : "unverified",
                 }
               }
 
-              return {
-                id: `${res.id}-${idx}`,
-                resourceId: res.id,
-                projectId: proj.id,
-                name: domain,
-                project: res.name,
-                type: isInternal ? "internal" : (isWildcard ? "wildcard" : "custom"),
-                // Certificado y status DNS validados mediante resolución real
-                ssl: isVerified ? "active" : "pending",
-                status: isVerified ? "verified" : "unverified",
-              }
-            }
-
-            domainPromises.push(verifyDns())
-          })
-        } else if (res.type === "POSTGRES_DB" && config?.custom_fqdn) {
-           // Cleanup stray custom_fqdn from buggy older syncs
-           const cleanConfig = { ...config }
-           delete cleanConfig.custom_fqdn
-           prisma.resource.update({ where: { id: res.id }, data: { config: cleanConfig } }).catch(() => {})
-        }
+              domainPromises.push(verifyDns())
+            })
+          } else if (res.type === "POSTGRES_DB" && config?.custom_fqdn) {
+             // Cleanup stray custom_fqdn from buggy older syncs
+             const cleanConfig = { ...config }
+             delete cleanConfig.custom_fqdn
+             prisma.resource.update({ where: { id: res.id }, data: { config: cleanConfig } }).catch(() => {})
+          }
+        })
       })
     })
 
